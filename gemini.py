@@ -8,16 +8,18 @@ Original file is located at
 """
 
 from google import genai
-import os
+import os, json
 from dotenv import load_dotenv
 
 #pip install -q -U google-genai
 
 # Example values, we could make fudge data for these too 
-"""journal_entry = ["Ugh, I’m so wiped right now. Like, I knew today was gonna be long, but I didn’t think it would hit me like this. My brain feels like oatmeal—kinda warm but totally useless. I’ve been staring at my screen for the past twenty minutes pretending I’m doing something, when really I’m just… existing. It’s funny, in a not-funny way, how burnout creeps in. One second you’re grinding, the next second your body’s like, “Nah, we’re done.”",
+journal_entry = '''
+["Ugh, I’m so wiped right now. Like, I knew today was gonna be long, but I didn’t think it would hit me like this. My brain feels like oatmeal—kinda warm but totally useless. I’ve been staring at my screen for the past twenty minutes pretending I’m doing something, when really I’m just… existing. It’s funny, in a not-funny way, how burnout creeps in. One second you’re grinding, the next second your body’s like, “Nah, we’re done.”",
                  "But I keep thinking about where I want to go with this. Like, I don’t want to just plateau here. I want to push my career forward—get sharper, get more visible, maybe even step into some bigger projects. I’ve got this voice in my head going, hey, every little bit counts, don’t waste today, and I want to listen to it. Even if I can’t go 100% right now, maybe I can still move the needle a little, do one small task that nudges me forward.",
-                 "So I’m torn, honestly. Part of me wants to collapse into bed, lights off, disappear. But part of me knows tomorrow-me will thank me if I just sit here for thirty more minutes and finish one thing. I don’t know. Maybe that’s the balance—accepting the crash but not letting it erase the momentum. Like… progress doesn’t always look like sprinting; sometimes it’s dragging yourself just one inch forward."]"""
-
+                 "So I’m torn, honestly. Part of me wants to collapse into bed, lights off, disappear. But part of me knows tomorrow-me will thank me if I just sit here for thirty more minutes and finish one thing. I don’t know. Maybe that’s the balance—accepting the crash but not letting it erase the momentum. Like… progress doesn’t always look like sprinting; sometimes it’s dragging yourself just one inch forward."
+                 ]
+'''
 load_dotenv()
 
 feelings = ["overwhelmed", "sad", "stressed"]
@@ -48,5 +50,11 @@ def get_gemini_response(journal_entry, feelings, sleep, j_habit, business, advic
         f"their own goals.) \n (if asked) recommendations for the client, kept to 100 words max and matching the tone of the client\n"
     )
     #print(response.text)
-    #return response.text
+    return response
 
+response_json = get_gemini_response(journal_entry, feelings, sleep, j_habit, business, advice, purpose)
+
+data = json.loads(response_json)
+print("### **Sentiments**")
+for sentiment in data.get('sentiments', []):
+    print(f"* {sentiment}")
