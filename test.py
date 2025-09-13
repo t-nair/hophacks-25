@@ -1,4 +1,20 @@
-import subprocess
+import os
+video_path
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+"""import subprocess
 import os
 import re
 
@@ -20,4 +36,4 @@ lines = result.stdout.splitlines()
 clean_lines = [re.sub(r'^\[.*?\]\s*', '', line).strip() for line in lines if line.strip()]
 transcription = ' '.join(clean_lines)
 
-print(transcription)
+print(transcription)"""

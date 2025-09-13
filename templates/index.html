@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Video Journal Entry</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            background-color: #f7f7f7;
+            color: #333;
+        }
+        form {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            max-width: 500px;
+        }
+        input[type="file"] {
+            margin-bottom: 15px;
+        }
+        input[type="submit"] {
+            padding: 10px 20px;
+            cursor: pointer;
+        }
+        .journal-text {
+            margin-top: 30px;
+            padding: 15px;
+            background-color: #fff;
+            border-radius: 10px;
+            max-width: 600px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+    <h1>Video Journal Entry</h1>
+
+    <form method="post" enctype="multipart/form-data">
+        <label>Upload your video journal:</label><br>
+        <input type="file" name="video" accept="video/*" required><br><br>
+        <input type="submit" value="Submit">
+    </form>
+
+    {% if journal_text %}
+    <div class="journal-text">
+        <h2>Journal Entry Text:</h2>
+        <p>{{ journal_text }}</p>
+    </div>
+    {% endif %}
+</body>
+</html>

@@ -7,7 +7,7 @@ Original file is located at
     https://colab.research.google.com/drive/1bqxrFutjIoPRZa7AMRwOBUNb4DE-pFRN
 """
 
-pip install -q -U google-genai
+#pip install -q -U google-genai
 
 journal_entry = ["Ugh, I’m so wiped right now. Like, I knew today was gonna be long, but I didn’t think it would hit me like this. My brain feels like oatmeal—kinda warm but totally useless. I’ve been staring at my screen for the past twenty minutes pretending I’m doing something, when really I’m just… existing. It’s funny, in a not-funny way, how burnout creeps in. One second you’re grinding, the next second your body’s like, “Nah, we’re done.”",
                  "But I keep thinking about where I want to go with this. Like, I don’t want to just plateau here. I want to push my career forward—get sharper, get more visible, maybe even step into some bigger projects. I’ve got this voice in my head going, hey, every little bit counts, don’t waste today, and I want to listen to it. Even if I can’t go 100% right now, maybe I can still move the needle a little, do one small task that nudges me forward.",

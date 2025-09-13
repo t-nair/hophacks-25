@@ -1,23 +1,25 @@
+import flask
 from flask import Flask, request, jsonify
-from flask_cors import CORS
-from werkzeug.utils import secure_filename
-from bson import ObjectId
-from datetime import datetime
+#from flask_cors import CORS
+#from werkzeug.utils import secure_filename
+#from bson import ObjectId
+from datetime import datetime, timedelta
 import os
+import random
 
 # MongoDB setup
-from pymongo import MongoClient
+#from pymongo import MongoClient
 
 # ENVIRONMENT VARIABLES (set as needed)
 MONGO_URI = os.environ.get("MONGO_URI", "mongodb://localhost:27017")
 UPLOAD_FOLDER = os.environ.get("UPLOAD_FOLDER", "./uploads")
 
-client = MongoClient(MONGO_URI)
-db = client.superjournal
+#client = MongoClient(MONGO_URI)
+#db = client.superjournal
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-CORS(app)
+#CORS(app)
 
 # Helper functions
 
@@ -64,7 +66,7 @@ def create_journal_entry():
     video_url = None
     transcript = text
     if video_file:
-        fname = secure_filename(video_file.filename)
+        fname = video_file.filename
         save_path = os.path.join(app.config['UPLOAD_FOLDER'], fname)
         os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
         video_file.save(save_path)
@@ -85,9 +87,9 @@ def create_journal_entry():
         "timestamp": datetime.utcnow(),
         "processed": True
     }
-    db.journals.insert_one(journal_doc)
     return jsonify({"success": True, "entry": journal_doc})
 
+"""
 @app.route('/api/journal', methods=['GET'])
 def get_journal_entries():
     user_id = request.args.get('user_id')
@@ -96,6 +98,68 @@ def get_journal_entries():
         e['_id'] = str(e['_id'])
     return jsonify(entries)
 
+    """
+
+@app.route('/api/analytics', methods=['GET'])
+def analytics():
+    user_id = request.args.get('user_id')
+    timeframe = int(request.args.get('days', 30))
+
+    # --- Mock data instead of MongoDB queries ---
+    moodTrends = []
+    sentimentDistribution = {"positive": 0, "neutral": 0, "negative": 0}
+    dailySummaries = []
+    goalProgress = []
+
+    today = datetime.utcnow()
+    for i in range(timeframe):
+        date = (today - timedelta(days=i)).strftime("%Y-%m-%d")
+        mood = round(random.uniform(0, 1), 2)
+        energy = round(random.uniform(0, 1), 2)
+        confidence = round(random.uniform(0, 1), 2)
+
+        moodTrends.append({
+            "date": date,
+            "mood": mood,
+            "energy": energy,
+            "confidence": confidence,
+            "entries": 1
+        })
+
+        # Randomly increment sentiment counts
+        overall = random.choice(["positive", "neutral", "negative"])
+        sentimentDistribution[overall] += 1
+
+        dailySummaries.append({
+            "date": (today - timedelta(days=i)).strftime("%a, %b %d"),
+            "primaryEmotion": random.choice(["joy", "calm", "satisfaction"]),
+            "keyWords": random.sample(["productive", "energized", "progress", "relaxed"], 2),
+            "goalMentions": random.randint(0, 3),
+            "sentimentScore": round(random.uniform(0, 1), 2)
+        })
+
+    # Mock goal progress
+    goalProgress = [
+        {"goal": "Fitness", "progress": 70, "target": 100, "category": "personal"},
+        {"goal": "Project Completion", "progress": 40, "target": 100, "category": "work"}
+    ]
+
+    pieData = [
+        {"name": "Positive", "value": sentimentDistribution["positive"], "color": "#10B981"},
+        {"name": "Neutral", "value": sentimentDistribution["neutral"], "color": "#6B7280"},
+        {"name": "Negative", "value": sentimentDistribution["negative"], "color": "#EF4444"},
+    ]
+
+    resp = {
+        "moodTrends": moodTrends,
+        "sentimentDistribution": pieData,
+        "goalProgress": goalProgress,
+        "dailySummaries": dailySummaries
+    }
+
+    return jsonify(resp)
+
+"""
 @app.route('/api/analytics', methods=['GET'])
 def analytics():
     user_id = request.args.get('user_id')
@@ -153,6 +217,7 @@ def analytics():
         "dailySummaries": dailySummaries
     }
     return jsonify(resp)
+"""
 
 @app.route('/api/goals', methods=['GET', 'POST'])
 def goals():
@@ -190,29 +255,6 @@ def notifications():
         }
     ]
     return jsonify(notifications)
-
-# User endpoints (minimal, expand as needed)
-@app.route('/api/user/register', methods=['POST'])
-def register_user():
-    data = request.get_json()
-    user_doc = {
-        "name": data.get("name"),
-        "email": data.get("email"),
-        "preferences": data.get("preferences", {}),
-        "createdAt": datetime.utcnow()
-    }
-    db.users.insert_one(user_doc)
-    return jsonify({"success": True, "user": user_doc})
-
-@app.route('/api/user/login', methods=['POST'])
-def login_user():
-    data = request.get_json()
-    email = data.get("email")
-    user = db.users.find_one({"email": email})
-    if user:
-        # Add authentication logic (password check/JWT etc.)
-        return jsonify({"success": True, "user": {"id": str(user["_id"]), "name": user["name"], "preferences": user.get("preferences", {})}})
-    return jsonify({"success": False}), 401
 
 # Serve uploaded videos (development only)
 @app.route('/uploads/<path:filename>')
