@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Journal Visualizations</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    canvas { margin: 20px 0; } /* size controlled via width/height attributes */
+    .heatmap { display: flex; flex-direction: column; gap: 2px; margin: 20px 0; }
+    .week { display: flex; gap: 2px; }
+    .day { width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 8px; color: #000; }
+    .weekday-labels { display: flex; gap: 2px; margin-bottom: 2px; }
+    .weekday-labels div { width: 20px; text-align: center; font-weight: bold; font-size: 9px; }
+  </style>
+</head>
+<body>
+  <h1>Journal Dashboard</h1>
+
+  <h2>Happiness, Stress, Focus (7-day line chart)</h2>
+  <canvas id="moodLineChart" width="400" height="150"></canvas>
+
+  <h2>Positive vs Negative Words Ratio</h2>
+  <canvas id="wordRatioChart" width="400" height="150"></canvas>
+
+  <h2>Mood Calendar Heatmap (Last 30 Days)</h2>
+  <div id="calendarHeatmap" class="heatmap"></div>
+
+  <script>
+    async function loadData() {
+      const response = await fetch("data.json");
+      return await response.json();
+    }
+
+    function renderCharts(data) {
+      // ----------------------------
+      // 1. Mood Line Chart
+      // ----------------------------
+      const last7 = data.slice(-7);
+      const dates = last7.map(d => d.Date);
+      const happiness = last7.map(d => d.Happiness_Score);
+      const stress = last7.map(d => d.Stress_Score);
+      const clarity = last7.map(d => d.Mental_Clarity);
+
+      new Chart(document.getElementById("moodLineChart"), {
+        type: "line",
+        data: {
+          labels: dates,
+          datasets: [
+            { label: "Happiness", data: happiness, borderColor: "rgba(75, 192, 192, 1)", fill: false, tension: 0.4 },
+            { label: "Stress", data: stress, borderColor: "rgba(255, 99, 132, 1)", fill: false, tension: 0.4 },
+            { label: "Focus/Clarity", data: clarity, borderColor: "rgba(54, 162, 235, 1)", fill: false, tension: 0.4 }
+          ]
+        },
+        options: {
+          responsive: false,
+          plugins: { legend: { position: 'top' }, tooltip: { mode: 'index', intersect: false } },
+          interaction: { mode: 'nearest', axis: 'x', intersect: false },
+          scales: {
+            y: { beginAtZero: true, title: { display: true, text: 'Score (0-10)' } },
+            x: { title: { display: true, text: 'Date' } }
+          }
+        }
+      });
+
+      // ----------------------------
+      // 2. Positive/Negative Words Ratio
+      // ----------------------------
+      const allDates = data.map(d => d.Date);
+      const pos = data.map(d => d.Positive_Words);
+      const neg = data.map(d => d.Negative_Words);
+
+      const ctxWords = document.getElementById("wordRatioChart").getContext("2d");
+      const gradientPos = ctxWords.createLinearGradient(0, 0, 0, 150);
+      gradientPos.addColorStop(0, "rgba(0, 200, 0, 0.4)");
+      gradientPos.addColorStop(1, "rgba(0, 200, 0, 0.05)");
+
+      const gradientNeg = ctxWords.createLinearGradient(0, 0, 0, 150);
+      gradientNeg.addColorStop(0, "rgba(255, 0, 0, 0.4)");
+      gradientNeg.addColorStop(1, "rgba(255, 0, 0, 0.05)");
+
+      new Chart(ctxWords, {
+        type: "line",
+        data: {
+          labels: allDates,
+          datasets: [
+            { label: "Positive Words", data: pos, borderColor: "green", backgroundColor: gradientPos, fill: true, tension: 0.3 },
+            { label: "Negative Words", data: neg, borderColor: "red", backgroundColor: gradientNeg, fill: true, tension: 0.3 }
+          ]
+        },
+        options: { responsive: false }
+      });
+
+      // ----------------------------
+      // 3. Calendar Heatmap (last 30 days)
+      // ----------------------------
+      const heatmap = d3.select("#calendarHeatmap");
+      heatmap.selectAll("*").remove();
+
+      const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+      const labelRow = heatmap.append("div").attr("class", "weekday-labels");
+      weekdays.forEach(d => labelRow.append("div").text(d));
+
+      const last30 = data.slice(-30);
+      const weeks = [];
+      last30.forEach(d => {
+        const date = new Date(d.Date);
+        const weekNum = Math.floor((date.getDate() - 1) / 7);
+        if (!weeks[weekNum]) weeks[weekNum] = [];
+        weeks[weekNum].push(d);
+      });
+
+      weeks.forEach(weekData => {
+        const weekRow = heatmap.append("div").attr("class", "week");
+        const firstDate = new Date(weekData[0].Date);
+        const startDay = (firstDate.getDay() + 6) % 7;
+        for (let i = 0; i < startDay; i++) {
+          weekRow.append("div").attr("class", "day").style("background", "#f0f0f0");
+        }
+        weekData.forEach(d => {
+          weekRow.append("div")
+            .attr("class", "day")
+            .style("background", `rgba(0, 200, 0, ${d.Happiness_Score/10})`)
+            .text(new Date(d.Date).getDate());
+        });
+      });
+    }
+
+    loadData().then(renderCharts);
+  </script>
+</body>
+</html>
