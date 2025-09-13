@@ -55,7 +55,67 @@ def get_gemini_response(journal_entry, feelings, sleep, j_habit, business, advic
 
 response_json = get_gemini_response(journal_entry, feelings, sleep, j_habit, business, advice, purpose)
 
-data = json.loads(response_json)
-print("### **Sentiments**")
-for sentiment in data.get('sentiments', []):
-    print(f"* {sentiment}")
+def json_convert(string):
+  # Remove the markdown formatting
+  string = string.replace("```json\n", "").replace("\n```", "")
+  data = json.loads(string)
+
+  # Write to a JSON file
+  with open('output.json', 'w') as json_file:
+      json.dump(data, json_file, indent=4)
+
+  print("JSON file created successfully!")
+  return data # Return the loaded data
+
+response_json = json_convert(response_json.text)
+
+# Now response_json holds the loaded dictionary, so no need to load again
+data = response_json
+print(data)
+
+def extract_fields(data):
+    """
+    Extracts emotions, goals with actionable steps, and recommendations
+    from the Gemini response JSON.
+
+    Args:
+        data (dict): Parsed JSON dictionary.
+
+    Returns:
+        dict: Contains emotion1, emotion2, emotion3, goals (list of dicts), and recommendations (str or None).
+    """
+    # Emotions
+    emotion1, emotion2, emotion3 = data['sentiments']
+
+    # Goals as list of dicts
+    goals = []
+    for goal_item in data['goals extracted']:
+        goal_dict = {
+            "goal": goal_item['goal'],
+            "actionable_steps": goal_item['actionable_steps']
+        }
+        goals.append(goal_dict)
+
+    # Recommendations (optional)
+    recommendations = data.get('recommendations for the client', None)
+
+    return {
+        "emotion1": emotion1,
+        "emotion2": emotion2,
+        "emotion3": emotion3,
+        "goals": goals,
+        "recommendations": recommendations
+    }
+
+# Example usage:
+results = extract_fields(data)
+
+print("Emotions:", results["emotion1"], results["emotion2"], results["emotion3"])
+print("\nGoals extracted:")
+for g in results["goals"]:
+    print(f"Goal: {g['goal']}")
+    for step in g['actionable_steps']:
+        print(" -", step)
+
+if results["recommendations"]:
+    print("\nRecommendations:", results["recommendations"])
