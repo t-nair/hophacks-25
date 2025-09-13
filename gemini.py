@@ -47,6 +47,7 @@ def get_gemini_response(journal_entry, feelings, sleep, j_habit, business, advic
         f"goals extracted (if the client wants advice, extract two of their own goals and give them one goal. if the client doesn't want advice, extract three of "
         f"their own goals.) \n (if asked) recommendations for the client, kept to 100 words max and matching the tone of the client\n"
     )
+
     #print(response.text)
-    #return response.text
+    return response.text
 
