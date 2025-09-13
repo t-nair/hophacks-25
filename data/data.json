@@ -1,0 +1,122 @@
+[
+  {
+    "Date": "2025-01-01",
+    "Top_Emotions": ["Angry", "Happy", "Motivated"],
+    "Goals": ["Meditate"],
+    "Actionable_Steps": ["Go for a run", "Write journal entry", "Review notes"],
+    "Happiness_Score": 7,
+    "Stress_Score": 2,
+    "Mental_Clarity": 3,
+    "Energy_Level": 9,
+    "Positive_Words": 18,
+    "Negative_Words": 20
+  },
+  {
+    "Date": "2025-01-02",
+    "Top_Emotions": ["Angry", "Sad", "Calm"],
+    "Goals": ["Learn coding", "Eat healthy"],
+    "Actionable_Steps": ["10 min meditation"],
+    "Happiness_Score": 1,
+    "Stress_Score": 2,
+    "Mental_Clarity": 1,
+    "Energy_Level": 6,
+    "Positive_Words": 29,
+    "Negative_Words": 19
+  },
+  {
+    "Date": "2025-01-03",
+    "Top_Emotions": ["Anxious", "Excited", "Calm"],
+    "Goals": ["Study"],
+    "Actionable_Steps": ["Review notes", "Write journal entry"],
+    "Happiness_Score": 5,
+    "Stress_Score": 3,
+    "Mental_Clarity": 5,
+    "Energy_Level": 7,
+    "Positive_Words": 14,
+    "Negative_Words": 12
+  },
+  {
+    "Date": "2025-01-04",
+    "Top_Emotions": ["Frustrated", "Sad", "Calm"],
+    "Goals": ["Read", "Study"],
+    "Actionable_Steps": ["Write journal entry", "Go for a run"],
+    "Happiness_Score": 1,
+    "Stress_Score": 4,
+    "Mental_Clarity": 4,
+    "Energy_Level": 1,
+    "Positive_Words": 15,
+    "Negative_Words": 15
+  },
+  {
+    "Date": "2025-01-05",
+    "Top_Emotions": ["Anxious", "Happy", "Calm"],
+    "Goals": ["Study"],
+    "Actionable_Steps": ["Cook healthy meal"],
+    "Happiness_Score": 9,
+    "Stress_Score": 6,
+    "Mental_Clarity": 6,
+    "Energy_Level": 6,
+    "Positive_Words": 13,
+    "Negative_Words": 17
+  },
+  {
+    "Date": "2025-01-06",
+    "Top_Emotions": ["Happy", "Motivated", "Grateful"],
+    "Goals": ["Work on project"],
+    "Actionable_Steps": ["Cook healthy meal"],
+    "Happiness_Score": 3,
+    "Stress_Score": 9,
+    "Mental_Clarity": 5,
+    "Energy_Level": 8,
+    "Positive_Words": 17,
+    "Negative_Words": 13
+  },
+  {
+    "Date": "2025-01-07",
+    "Top_Emotions": ["Angry", "Excited", "Lonely"],
+    "Goals": ["Eat healthy"],
+    "Actionable_Steps": ["Call a friend"],
+    "Happiness_Score": 6,
+    "Stress_Score": 9,
+    "Mental_Clarity": 9,
+    "Energy_Level": 4,
+    "Positive_Words": 11,
+    "Negative_Words": 5
+  },
+  {
+    "Date": "2025-01-08",
+    "Top_Emotions": ["Motivated", "Lonely", "Grateful"],
+    "Goals": ["Learn coding", "Eat healthy"],
+    "Actionable_Steps": ["10 min meditation", "Go for a run"],
+    "Happiness_Score": 8,
+    "Stress_Score": 2,
+    "Mental_Clarity": 7,
+    "Energy_Level": 2,
+    "Positive_Words": 26,
+    "Negative_Words": 9
+  },
+  {
+    "Date": "2025-01-09",
+    "Top_Emotions": ["Frustrated", "Grateful", "Anxious"],
+    "Goals": ["Study"],
+    "Actionable_Steps": ["Sleep before 11pm", "Call a friend", "Cook healthy meal"],
+    "Happiness_Score": 4,
+    "Stress_Score": 3,
+    "Mental_Clarity": 2,
+    "Energy_Level": 8,
+    "Positive_Words": 16,
+    "Negative_Words": 14
+  },
+  {
+    "Date": "2025-01-10",
+    "Top_Emotions": ["Calm", "Grateful", "Excited"],
+    "Goals": ["Study"],
+    "Actionable_Steps": ["Write journal entry"],
+    "Happiness_Score": 7,
+    "Stress_Score": 10,
+    "Mental_Clarity": 3,
+    "Energy_Level": 6,
+    "Positive_Words": 23,
+    "Negative_Words": 7
+  }
+]
