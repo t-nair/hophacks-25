@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your Journal</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles/journal.css') }}">
+</head>
+<body>
+
+  <section id="journal-page">
+    <div class="paper">
+      <h2 id="typewriter"></h2>
+      <button id="growth-btn">MY GROWTH JOURNEY</button>
+    </div>
+  </section>
+
+  <script src="{{ url_for('static', filename='js/journal.js') }}"></script>
+</body>
+</html>
