@@ -9,6 +9,7 @@ Original file is located at
 
 #pip install -q -U google-genai
 
+# Example values, we could make fudge data for these too 
 journal_entry = ["Ugh, I’m so wiped right now. Like, I knew today was gonna be long, but I didn’t think it would hit me like this. My brain feels like oatmeal—kinda warm but totally useless. I’ve been staring at my screen for the past twenty minutes pretending I’m doing something, when really I’m just… existing. It’s funny, in a not-funny way, how burnout creeps in. One second you’re grinding, the next second your body’s like, “Nah, we’re done.”",
                  "But I keep thinking about where I want to go with this. Like, I don’t want to just plateau here. I want to push my career forward—get sharper, get more visible, maybe even step into some bigger projects. I’ve got this voice in my head going, hey, every little bit counts, don’t waste today, and I want to listen to it. Even if I can’t go 100% right now, maybe I can still move the needle a little, do one small task that nudges me forward.",
                  "So I’m torn, honestly. Part of me wants to collapse into bed, lights off, disappear. But part of me knows tomorrow-me will thank me if I just sit here for thirty more minutes and finish one thing. I don’t know. Maybe that’s the balance—accepting the crash but not letting it erase the momentum. Like… progress doesn’t always look like sprinting; sometimes it’s dragging yourself just one inch forward."]
@@ -20,23 +21,27 @@ business = "very"
 advice = "does"
 purpose = "to feel better about life"
 
+
 from google import genai
 
 
 # The client gets the API key from the environment variable `GEMINI_API_KEY`.
 client = genai.Client(api_key="")
 
-response = client.models.generate_content(
-    model="gemini-2.5-flash", contents=f"You are a expert in professional career development and mental health and well-being, spending over 12 years"
-    f"in industry helping people progress, not just in terms of wealth/success, but also in terms of happiness and overall mental health."
-    f"Here is your client's most recent rant transcript. Provide them with the following: 1. An analysis of the main sentiments they are feeling."
-    f"Keep this to three words max, all emotions. 2. Any goals they mentioned in their rant - for each of these, provide actionable steps to later"
-    f"be integrated into their calendar. 3. Provide any additional feedback or suggestions to your client. Here is their transcript: {journal_entry}"
-    f"Here are your client's most recent feelings: {feelings}. Here are your client's sleeping habits: {sleep}. Use the number {sleep} to calculate a score out of 10"
-    f"to offer your client advice about how many hours they should sleep per night (8 is optimal). The client is {business} busy. The client has {j_habit} in"
-    f"the past. The client {advice} want advice. The client wants {purpose}. Format your response as a .json file with the following fields:\n sentiments \n "
-    f"goals extracted (if the client wants advice, extract two of their own goals and give them one goal. if the client doesn't want advice, extract three of "
-    f"their own goals.) \n (if asked) recommendations for the client, kept to 100 words max and matching the tone of the client\n"
-)
-print(response.text)
+def get_gemini_response(journal_entry, feelings, sleep, j_habit, business, advice, purpose):
+        
+    response = client.models.generate_content(
+        model="gemini-2.5-flash", contents=f"You are a expert in professional career development and mental health and well-being, spending over 12 years"
+        f"in industry helping people progress, not just in terms of wealth/success, but also in terms of happiness and overall mental health."
+        f"Here is your client's most recent rant transcript. Provide them with the following: 1. An analysis of the main sentiments they are feeling."
+        f"Keep this to three words max, all emotions. 2. Any goals they mentioned in their rant - for each of these, provide actionable steps to later"
+        f"be integrated into their calendar. 3. Provide any additional feedback or suggestions to your client. Here is their transcript: {journal_entry}"
+        f"Here are your client's most recent feelings: {feelings}. Here are your client's sleeping habits: {sleep}. Use the number {sleep} to calculate a score out of 10"
+        f"to offer your client advice about how many hours they should sleep per night (8 is optimal). The client is {business} busy. The client has {j_habit} in"
+        f"the past. The client {advice} want advice. The client wants {purpose}. Format your response as a .json file with the following fields:\n sentiments \n "
+        f"goals extracted (if the client wants advice, extract two of their own goals and give them one goal. if the client doesn't want advice, extract three of "
+        f"their own goals.) \n (if asked) recommendations for the client, kept to 100 words max and matching the tone of the client\n"
+    )
+    print(response.text)
+    return response.text
 
