@@ -28,7 +28,7 @@ def save_insights(insights):
 text_entries = load_entries()
 
 # Set your Gemini API key here
-GEMINI_API_KEY = "AIzaSyAqFXsTp2fhsqZtckVb_gBDufeOfbyS-U0"
+GEMINI_API_KEY = "AIzaSyAEZXzXxt1SR5Xa1sTLJwmMoRRgYYd9jos"
 genai.configure(api_key=GEMINI_API_KEY)
 model = genai.GenerativeModel("gemini-2.5-flash")
 
@@ -46,7 +46,16 @@ def submit_text():
 
     # Generate highlights using Gemini for the new entry
     try:
-        prompt = f"Highlight the key insight from this journal entry:\n{text}"
+        prompt = (
+            "You are a compassionate therapist and reflective coach. "
+            "Read the following journal entry and respond with:\n"
+            "Summary: (A ~50-word empathetic summary capturing the writer’s emotions, mindset, and underlying themes.)\n"
+            "Advice: (One to two gentle, constructive pieces of advice tailored to their situation.)\n"
+            "MotivationalWords: (A comma-separated list of 3-5 motivational words or phrases relevant to the writer's situation.)\n"
+            "\nKeep the tone warm, supportive, and practical. "
+            "Do not repeat the journal entry verbatim—summarize it in your own words.\n"
+            f"Journal entry:\n{text}"
+        )
         response = model.generate_content(prompt)
         highlight = response.text
         entry["highlight"] = highlight
