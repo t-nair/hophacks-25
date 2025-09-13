@@ -55,7 +55,20 @@ def get_gemini_response(journal_entry, feelings, sleep, j_habit, business, advic
 
 response_json = get_gemini_response(journal_entry, feelings, sleep, j_habit, business, advice, purpose)
 
-data = json.loads(response_json)
-print("### **Sentiments**")
-for sentiment in data.get('sentiments', []):
-    print(f"* {sentiment}")
+def json_convert(string):
+  # Remove the markdown formatting
+  string = string.replace("```json\n", "").replace("\n```", "")
+  data = json.loads(string)
+
+  # Write to a JSON file
+  with open('output.json', 'w') as json_file:
+      json.dump(data, json_file, indent=4)
+
+  print("JSON file created successfully!")
+  return data # Return the loaded data
+
+response_json = json_convert(response_json.text)
+
+# Now response_json holds the loaded dictionary, so no need to load again
+data = response_json
+print(data)
