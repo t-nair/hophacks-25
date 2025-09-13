@@ -3,46 +3,6 @@ import { Scatter } from 'react-chartjs-2';
 import { Chart as ChartJS, LinearScale, PointElement, Tooltip, Legend } from 'chart.js';
 ChartJS.register(LinearScale, PointElement, Tooltip, Legend);
 
-const ColorClusterChart = () => {
-  const [chartData, setChartData] = useState({});
-
-  useEffect(() => {
-    // Run the k-means algorithm
-    const k = 3; // Example: 3 clusters
-    const clusters = kMeans(colorData, k);
-
-    // Format the data for Chart.js
-    const datasets = clusters.map((cluster, index) => {
-      const dataPoints = cluster.map(point => ({ x: point[0], y: point[1], z: point[2] }));
-      const centroid = clusters.reduce((acc, val) => [acc[0] + val[0], acc[1] + val[1], acc[2] + val[2]]);
-      const centroidColor = `rgb(${Math.round(centroid[0] / clusters.length)}, ${Math.round(centroid[1] / clusters.length)}, ${Math.round(centroid[2] / clusters.length)})`;
-
-      return {
-        label: `Cluster ${index + 1}`,
-        data: dataPoints,
-        backgroundColor: centroidColor,
-        pointRadius: 8,
-        pointHoverRadius: 10,
-      };
-    });
-
-    setChartData({ datasets });
-  }, []);
-
-  const options = {
-    scales: {
-      x: { title: { display: true, text: 'Red (R)' }, min: 0, max: 255 },
-      y: { title: { display: true, text: 'Green (G)' }, min: 0, max: 255 },
-    },
-    // Note: z-axis (Blue) is not directly visualized in a 2D scatter plot.
-    // A 3D graph library would be required for that.
-  };
-
-  return <Scatter data={chartData} options={options} />;
-};
-
-export default ColorClusterChart;
-
 
 //try to create the kmeans algorithm here
 function kMeans(data, k) {
@@ -96,6 +56,46 @@ const colorData = [
   [255, 220, 0],   // Happy
   [220, 80, 50]    // Strong
 ];
+
+const ColorClusterChart = () => {
+  const [chartData, setChartData] = useState({});
+
+  useEffect(() => {
+    // Run the k-means algorithm
+    const k = 3; // Example: 3 clusters
+    const clusters = kMeans(colorData, k);
+
+    // Format the data for Chart.js
+    const datasets = clusters.map((cluster, index) => {
+      const dataPoints = cluster.map(point => ({ x: point[0], y: point[1], z: point[2] }));
+      const centroid = clusters.reduce((acc, val) => [acc[0] + val[0], acc[1] + val[1], acc[2] + val[2]]);
+      const centroidColor = `rgb(${Math.round(centroid[0] / clusters.length)}, ${Math.round(centroid[1] / clusters.length)}, ${Math.round(centroid[2] / clusters.length)})`;
+
+      return {
+        label: `Cluster ${index + 1}`,
+        data: dataPoints,
+        backgroundColor: centroidColor,
+        pointRadius: 8,
+        pointHoverRadius: 10,
+      };
+    });
+
+    setChartData({ datasets });
+  }, []);
+
+  const options = {
+    scales: {
+      x: { title: { display: true, text: 'Red (R)' }, min: 0, max: 255 },
+      y: { title: { display: true, text: 'Green (G)' }, min: 0, max: 255 },
+    },
+    // Note: z-axis (Blue) is not directly visualized in a 2D scatter plot.
+    // A 3D graph library would be required for that.
+  };
+
+  return <Scatter data={chartData} options={options} />;
+};
+
+export default ColorClusterChart;
 
 
 
