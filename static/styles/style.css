@@ -23,7 +23,7 @@ section {
 
 /* Landing Page */
 #landing {
-    background: url("/static/Workshops.png") no-repeat center center/cover;
+    background: url("/static/images/background.png") no-repeat center center/cover;
     color: black;
 }
 
