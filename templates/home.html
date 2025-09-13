@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mood Journal</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body, html {
+      height: 100%;
+      scroll-behavior: smooth;
+      font-family: 'Georgia', serif;
+      overflow-x: hidden;
+    }
+
+    section {
+      height: 100vh;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      text-align: center;
+    }
+
+    /* Landing Page */
+    #landing {
+      background: url("/static/Workshops.png") no-repeat center center/cover;
+      color: black;
+    }
+
+    #landing h1 {
+      font-size: 3rem;
+      margin-bottom: 20px;
+    }
+
+    #landing button {
+      background: black;
+      color: white;
+      border: none;
+      padding: 15px 30px;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: transform 0.3s ease;
+    }
+
+    #landing button:hover {
+      transform: scale(1.1);
+    }
+
+    /* Recording Section */
+    #record {
+      background: #111;
+      color: white;
+    }
+
+    video {
+      width: 60%;
+      max-height: 400px;
+      border: 3px solid white;
+      border-radius: 12px;
+      margin: 20px;
+    }
+
+    #record button {
+      background: crimson;
+      color: white;
+      border: none;
+      padding: 12px 25px;
+      font-size: 1rem;
+      cursor: pointer;
+      border-radius: 6px;
+    }
+
+    /* Dashboard Section */
+    #dashboard {
+      background: #f4efe6;
+      padding: 50px;
+      flex-direction: column;
+      align-items: flex-start;
+      display: none;
+    }
+
+    #dashboard h2 {
+      font-size: 2.2rem;
+      margin-bottom: 20px;
+    }
+
+    .journal {
+      background: white;
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+      margin-bottom: 30px;
+      max-width: 700px;
+      line-height: 1.6;
+    }
+
+    canvas {
+      max-width: 600px;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Landing Section -->
+  <section id="landing">
+    <h1>How do you feel today?</h1>
+    <button onclick="document.getElementById('record').scrollIntoView({behavior:'smooth'})">
+      EXPLORE
+    </button>
+  </section>
+
+  <!-- Recording Section -->
+  <section id="record">
+    <h1>Record your reflection</h1>
+    <video id="preview" autoplay muted></video><br>
+    <button id="startRecord">Start Recording</button>
+  </section>
+
+  <!-- Dashboard Section -->
+  <section id="dashboard">
+    <h2>Your Journal</h2>
+    <div class="journal" id="journalText">
+      <p>Processing your reflection...</p>
+      {% if journal_text %}
+       <div class="journal-text">
+         <h2>Journal Entry Text:</h2>
+         <p>{{ journal_text }}</p>
+      </div>
+      {% endif %}
+    </div>
+    <canvas id="moodChart"></canvas>
+  </section>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <script>
+    const video = document.getElementById('preview');
+    const startBtn = document.getElementById('startRecord');
+    const dashboard = document.getElementById('dashboard');
+    const journalDiv = document.getElementById('journalText');
+    const recordSection = document.getElementById('record');
+
+    let mediaRecorder;
+    let chunks = [];
+
+    // Request camera & mic access
+    navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+      .then(stream => {
+        video.srcObject = stream;
+        mediaRecorder = new MediaRecorder(stream);
+
+        mediaRecorder.ondataavailable = e => chunks.push(e.data);
+
+        mediaRecorder.onstop = async () => {
+          const blob = new Blob(chunks, { type: 'video/webm' });
+          const formData = new FormData();
+          formData.append('video', blob, 'journal.webm');
+
+          // Upload to Flask
+          const response = await fetch('/upload', {
+            method: 'POST',
+            body: formData
+          });
+          const data = await response.text();
+
+          // Show dashboard
+          recordSection.style.display = "none";
+          dashboard.style.display = "flex";
+          journalDiv.innerHTML = data;
+
+          // Chart (example, static numbers for now)
+          new Chart(document.getElementById('moodChart'), {
+            type: 'radar',
+            data: {
+              labels: ['Happy', 'Calm', 'Focused', 'Stressed', 'Excited'],
+              datasets: [{
+                label: 'Your Mood',
+                data: [65, 80, 70, 40, 90],
+                backgroundColor: 'rgba(54,162,235,0.2)',
+                borderColor: 'rgba(54,162,235,1)',
+                borderWidth: 2
+              }]
+            }
+          });
+        };
+      });
+
+    // Start 5s recording
+    startBtn.onclick = () => {
+      chunks = [];
+      mediaRecorder.start();
+      startBtn.textContent = "Recording...";
+      setTimeout(() => {
+        mediaRecorder.stop();
+        startBtn.textContent = "Start Recording";
+      }, 5000);
+    };
+  </script>
+</body>
+</html>

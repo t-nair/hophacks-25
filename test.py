@@ -1,19 +1,3 @@
-import os
-video_path
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 """import subprocess
 import os
 import re
