@@ -536,19 +536,46 @@ function App() {
   }, []);
 
   // Fetch entries from backend
+  // Simple sentiment analysis function
+  function getSentiment(text) {
+    const positiveWords = ["happy", "joy", "excited", "content", "hopeful", "grateful", "proud", "confident", "loving", "playful", "calm", "relaxed", "peaceful", "productive", "energized", "focused", "accomplished", "progress", "satisfaction", "gratitude", "motivated", "determined"];
+    const negativeWords = ["sad", "lonely", "hurt", "angry", "frustrated", "anxious", "nervous", "insecure", "overwhelmed", "jealous", "confused", "awkward", "embarrassed", "guilty", "ashamed", "regretful", "resentful", "envious", "exhausted", "stressed"];
+    let score = 0;
+    const textLower = text.toLowerCase();
+    positiveWords.forEach(word => { if (textLower.includes(word)) score += 1; });
+    negativeWords.forEach(word => { if (textLower.includes(word)) score -= 1; });
+    if (score > 0) return "positive";
+    if (score < 0) return "negative";
+    return "neutral";
+  }
+
   const fetchEntries = async () => {
     try {
       const res = await axios.get('http://localhost:5000/entries');
       // Convert backend entries to frontend format
-      const backendEntries = res.data.map((entry, idx) => ({
-        _id: idx + 1000,
-        title: entry.text ? 'Text Entry' : 'Video Entry',
-        timestamp: new Date(entry.timestamp),
-        sentiment: { overall: 'neutral', confidence: 0.5, emotions: {} },
-        transcript: entry.text || '(Video entry uploaded)',
-        highlight: entry.highlight || ''
-      }));
+      const backendEntries = res.data.map((entry, idx) => {
+        const sentiment = getSentiment(entry.text || "");
+        return {
+          _id: idx + 1000,
+          title: entry.text ? 'Text Entry' : 'Video Entry',
+          timestamp: new Date(entry.timestamp),
+          sentiment: { overall: sentiment, confidence: 1, emotions: {} },
+          transcript: entry.text || '(Video entry uploaded)',
+          highlight: entry.highlight || ''
+        };
+      });
       setEntries([...backendEntries, ...mockEntries]);
+      // Update analytics sentiment distribution
+      const sentimentCounts = { positive: 0, neutral: 0, negative: 0 };
+      backendEntries.forEach(e => { sentimentCounts[e.sentiment.overall] += 1; });
+      setAnalytics(a => ({
+        ...a,
+        sentimentDistribution: [
+          { name: 'Positive', value: sentimentCounts.positive, color: '#10B981' },
+          { name: 'Neutral', value: sentimentCounts.neutral, color: '#6B7280' },
+          { name: 'Negative', value: sentimentCounts.negative, color: '#EF4444' }
+        ]
+      }));
     } catch (err) {
       setEntries([...mockEntries]);
     }
@@ -1002,16 +1029,28 @@ function App() {
           <div style={{background: 'white', padding: '32px', borderRadius: '16px', minWidth: '400px', maxWidth: '600px', boxShadow: '0 4px 24px rgba(0,0,0,0.2)'}} onClick={e => e.stopPropagation()}>
             <h2 style={{marginBottom: '16px'}}>Gemini Highlight</h2>
             <p style={{fontWeight: 'bold', color: '#8b5cf6', marginBottom: '16px'}}>{selectedEntry.highlight || 'No highlight available.'}</p>
-            {/* Extract top words/insight if present in highlight */}
+            {/* Extract advice from Gemini highlight and show as insights */}
             {selectedEntry.highlight && (
-              <div style={{marginTop: '16px'}}>
-                <h4 style={{color: '#1e3a8a'}}>Top Words / Insight</h4>
-                <div style={{display: 'flex', gap: '8px', flexWrap: 'wrap'}}>
-                  {selectedEntry.highlight.split(/[,.;\n]/).filter(w => w.trim().length > 0).slice(0,5).map((word, idx) => (
-                    <span key={idx} style={{background: '#dbeafe', color: '#1e40af', padding: '4px 12px', borderRadius: '9999px', fontSize: '14px'}}>{word.trim()}</span>
-                  ))}
-                </div>
-              </div>
+              (() => {
+                // Try to extract advice from the highlight
+                const adviceMatch = selectedEntry.highlight.match(/(?:Advice:|advice:|\d\.|\n2\.|- |• )(.*)/i);
+                let advice = adviceMatch ? adviceMatch[1] : null;
+                // If multiple pieces of advice, split by common delimiters
+                let adviceList = advice ? advice.split(/\.|\n|;|,|•|-/).map(a => a.trim()).filter(a => a.length > 0) : [];
+                return (
+                  <div style={{marginTop: '16px'}}>
+                    <h4 style={{color: '#1e3a8a'}}>Advice / Insights</h4>
+                    <div style={{display: 'flex', gap: '8px', flexWrap: 'wrap'}}>
+                      {adviceList.length > 0
+                        ? adviceList.slice(0,3).map((ad, idx) => (
+                            <span key={idx} style={{background: '#dbeafe', color: '#1e40af', padding: '4px 12px', borderRadius: '9999px', fontSize: '14px'}}>{ad}</span>
+                          ))
+                        : <span style={{color: '#6b7280'}}>No advice found.</span>
+                      }
+                    </div>
+                  </div>
+                );
+              })()
             )}
             <button style={{marginTop: '32px', background: 'linear-gradient(45deg, #8b5cf6 0%, #ec4899 100%)', color: 'white', padding: '12px 24px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: '500'}} onClick={() => setSelectedEntry(null)}>Close</button>
           </div>
