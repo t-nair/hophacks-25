@@ -24,7 +24,7 @@ from google import genai
 
 
 # The client gets the API key from the environment variable `GEMINI_API_KEY`.
-client = genai.Client(api_key="AIzaSyAqFXsTp2fhsqZtckVb_gBDufeOfbyS-U0")
+client = genai.Client(api_key="")
 
 response = client.models.generate_content(
     model="gemini-2.5-flash", contents=f"You are a expert in professional career development and mental health and well-being, spending over 12 years"
