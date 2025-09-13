@@ -1,7 +1,9 @@
 document.addEventListener("DOMContentLoaded", () => {
-  const text = "Dear Tanya,\nblah blah blah blah blah...";
   const typewriterElement = document.getElementById("typewriter");
   const button = document.getElementById("growth-btn");
+
+  const text = typewriterElement.textContent;
+  typewriterElement.textContent = "";
 
   let index = 0;
 

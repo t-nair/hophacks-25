@@ -33,7 +33,8 @@ def upload_video():
 
         journal_text = extract_audio(save_path)
 
-        return f"<h2>Journal Entry Text:</h2><p>{journal_text}</p>"
+        #return f"<h2>Journal Entry Text:</h2><p>{journal_text}</p>"
+        return render_template("journal.html", journal_text=journal_text)
 
     # GET request: show upload form
     return '''
