@@ -113,7 +113,7 @@
   <section id="landing">
     <h1>How do you feel today?</h1>
     <button onclick="document.getElementById('record').scrollIntoView({behavior:'smooth'})">
-      EXPLORE
+      REFLECT ON IT!
     </button>
   </section>
 
@@ -128,12 +128,13 @@
   <section id="dashboard">
     <h2>Your Journal</h2>
     <div class="journal" id="journalText">
-      <p>Processing your reflection...</p>
       {% if journal_text %}
-       <div class="journal-text">
-         <h2>Journal Entry Text:</h2>
-         <p>{{ journal_text }}</p>
-      </div>
+        <div class="journal-text"></div>
+          <h2>Journal Entry Text:</h2>
+          <p>{{ journal_text }}</p>
+        </div>
+      {% else %}
+        <p>Processing your reflection...</p>
       {% endif %}
     </div>
     <canvas id="moodChart"></canvas>
