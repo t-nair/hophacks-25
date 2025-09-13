@@ -47,6 +47,7 @@ def upload_video(video_file):
     audio_path = os.path.join(AUDIO_DIR, f'{base_name}.wav')
     print('Audio path: ', audio_path)
 
+    #adding a comment
     # Extract audio
     result = subprocess.run([
         'ffmpeg', '-y', '-i', video_path,
