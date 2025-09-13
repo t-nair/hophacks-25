@@ -9,6 +9,7 @@ j_habit = "not journaled"
 business = "very"
 advice = "does"
 purpose = "to feel better about life"
+journal_text = "I am not having a good day. I am so tired. I have to finish this project or everything is over. I can't take this anymore."
 
 MODEL = 'medium'
 WHISPER_DIR = '/Users/ujjwalkaur/Documents/hophacks-25/whisper.cpp'
@@ -51,7 +52,7 @@ def extract_audio(video_path):
     except Exception as e:
         transcription = e
 
-    response = get_gemini_response(transcription, feelings, sleep, j_habit, business, advice, purpose)
+    response = get_gemini_response(journal_text, feelings, sleep, j_habit, business, advice, purpose)
 
     return f"Transcription: {response}"
 

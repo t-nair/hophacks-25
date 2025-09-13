@@ -43,6 +43,82 @@
 
   <!-- Chart.js -->
    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    const video = document.getElementById('preview');
+    const startBtn = document.getElementById('startRecord');
+    const stopBtn = document.getElementById('stopRecord');
+    const dashboard = document.getElementById('dashboard');
+    const recordSection = document.getElementById('record');
+
+    let mediaRecorder;
+    let chunks = [];
+
+    // Access camera
+    navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+      .then(stream => {
+        video.srcObject = stream;
+        mediaRecorder = new MediaRecorder(stream);
+
+        mediaRecorder.ondataavailable = e => chunks.push(e.data);
+
+        mediaRecorder.onstop = () => {
+          // After recording ends, go to dashboard
+          recordSection.style.display = "none";
+          dashboard.style.display = "flex";
+          dashboard.scrollIntoView({behavior: "smooth"});
+
+          // Example Chart
+          new Chart(document.getElementById('moodChart'), {
+            type: 'radar',
+            data: {
+              labels: ['Happy', 'Calm', 'Focused', 'Stressed', 'Excited'],
+              datasets: [{
+                label: 'Your Mood',
+                data: [65, 80, 70, 40, 90],
+                backgroundColor: 'rgba(54,162,235,0.2)',
+                borderColor: 'rgba(54,162,235,1)',
+                borderWidth: 2
+              }]
+            }
+          });
+        };
+      });
+
+    // Start recording
+    startBtn.onclick = () => {
+      chunks = [];
+      mediaRecorder.start();
+      startBtn.textContent = "Recording...";
+      stopBtn.style.display = "inline";
+    };
+
+    stopBtn.onclick = () => {
+      if (mediaRecorder.state === "recording") {
+        mediaRecorder.stop();
+        startBtn.textContent = "Start Recording";
+        stopBtn.style.display = "none";
+
+        mediaRecorder.onstop = async () => {
+        // Combine the chunks into a Blob
+        const blob = new Blob(chunks, { type: "video/webm" });
+        const formData = new FormData();
+        formData.append("video", blob, "reflection.webm");
+
+        // Send video to Flask backend
+        const response = await fetch("/upload", {
+          method: "POST",
+          body: formData
+        });
+
+        // Load the returned journal.html page
+        const html = await response.text();
+        document.open();
+        document.write(html);
+        document.close();
+      };
+    }
+  };
+  </script>
 </body>
 </html>
