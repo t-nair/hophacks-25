@@ -1,6 +1,14 @@
 import subprocess
 import os
 import re
+from gemini import get_gemini_response
+
+feelings = ["overwhelmed", "sad", "stressed"]
+sleep = 6
+j_habit = "not journaled"
+business = "very"
+advice = "does"
+purpose = "to feel better about life"
 
 MODEL = 'medium'
 WHISPER_DIR = '/Users/ujjwalkaur/Documents/hophacks-25/whisper.cpp'
@@ -43,7 +51,9 @@ def extract_audio(video_path):
     except Exception as e:
         transcription = e
 
-    return f"Transcription: {transcription}"
+    response = get_gemini_response(transcription, feelings, sleep, j_habit, business, advice, purpose)
+
+    return f"Transcription: {response}"
 
 def transcribe(audio_path, whisper_dir=WHISPER_DIR):
     result = subprocess.run(
