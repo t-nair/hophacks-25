@@ -9,7 +9,7 @@ def create_dir_if_not_exists(directory):
 def record_video():
     cam = cv.VideoCapture(0)
 
-    output = cv.VideoWriter('./video/rant.mp4', 
+    output = cv.VideoWriter('./input/journal_entry.mp4', 
                    cv.VideoWriter_fourcc(*'mp4v'), 20.0, (640,480))
 
     while cam.isOpened():
@@ -27,7 +27,7 @@ def record_video():
 def main():
 
     # create a directory
-    create_dir_if_not_exists(f'./video')
+    create_dir_if_not_exists(f'./input')
 
     # record the video
     record_video()
