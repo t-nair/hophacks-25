@@ -1284,10 +1284,12 @@ function App() {
           position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
           background: 'rgba(0,0,0,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000
         }} onClick={() => setSelectedEntry(null)}>
-          <div style={{background: 'white', padding: '32px', borderRadius: '16px', minWidth: '400px', maxWidth: '600px', boxShadow: '0 4px 24px rgba(0,0,0,0.2)'}} onClick={e => e.stopPropagation()}>
-            <h2 style={{marginBottom: '16px'}}>Gemini Highlight</h2>
-            {/* If video entry, show playable video */}
-            {selectedEntry.videoUrl ? (
+          <div style={{background: 'white', padding: '32px', borderRadius: '20px', minWidth: '400px', maxWidth: '600px', boxShadow: '0 4px 24px rgba(0,0,0,0.2)'}} onClick={e => e.stopPropagation()}>
+            <div style={{display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px'}}>
+              <Brain size={32} color="#8b5cf6" />
+              <h2 style={{margin: 0, fontWeight: 700, color: '#8b5cf6'}}>Gemini Reflection</h2>
+            </div>
+            {selectedEntry.videoUrl && (
               <div style={{marginBottom: '16px'}}>
                 <video
                   src={selectedEntry.videoUrl}
@@ -1295,7 +1297,7 @@ function App() {
                   style={{width: '100%', borderRadius: '8px', background: '#111827'}}
                 />
               </div>
-            ) : null}
+            )}
             {!selectedEntry.highlight ? (
               <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '80px'}}>
                 <div style={{
@@ -1309,32 +1311,66 @@ function App() {
                 }}></div>
                 <span style={{color: '#8b5cf6'}}>Loading highlight...</span>
               </div>
-            ) : (
-              <>
-                <p style={{fontWeight: 'bold', color: '#8b5cf6', marginBottom: '16px'}}>{selectedEntry.highlight}</p>
-                {/* Extract advice from Gemini highlight and show as insights */}
-                {(() => {
-                  // Try to extract advice from the highlight
-                  const adviceMatch = selectedEntry.highlight.match(/(?:Advice:|advice:|\d\.|\n2\.|- |• )(.*)/i);
-                  let advice = adviceMatch ? adviceMatch[1] : null;
-                  // If multiple pieces of advice, split by common delimiters
-                  let adviceList = advice ? advice.split(/\.|\n|;|,|•|-/).map(a => a.trim()).filter(a => a.length > 0) : [];
-                  return (
-                    <div style={{marginTop: '16px'}}>
-                      <h4 style={{color: '#1e3a8a'}}>Advice / Insights</h4>
-                      <div style={{display: 'flex', gap: '8px', flexWrap: 'wrap'}}>
-                        {adviceList.length > 0
-                          ? adviceList.slice(0,3).map((ad, idx) => (
-                              <span key={idx} style={{background: '#dbeafe', color: '#1e40af', padding: '4px 12px', borderRadius: '9999px', fontSize: '14px'}}>{ad}</span>
-                            ))
-                          : <span style={{color: '#6b7280'}}>No advice found.</span>
-                        }
+            ) : (() => {
+                // Parse highlight into sections
+                const highlight = selectedEntry.highlight;
+                const summaryMatch = highlight.match(/Summary:(.*?)(Advice:|MotivationalWords:|$)/is);
+                const adviceMatch = highlight.match(/Advice:(.*?)(MotivationalWords:|$)/is);
+                const motivationMatch = highlight.match(/MotivationalWords:(.*)/is);
+                const summary = summaryMatch ? summaryMatch[1].trim() : '';
+                let adviceRaw = adviceMatch ? adviceMatch[1].trim() : '';
+                const motivationRaw = motivationMatch ? motivationMatch[1].trim() : '';
+                // Improved advice extraction: split by numbered, bulleted, or newlines, filter for full sentences
+                let adviceList = [];
+                if (adviceRaw) {
+                  // Remove leading non-advice lines (e.g. '**', 'Advice', numbers alone)
+                  adviceRaw = adviceRaw.replace(/^\*+|Advice:?|^\d+\s*$/gm, '').trim();
+                  // Split by common bullet/number patterns
+                  adviceList = adviceRaw.split(/(?:^\s*\d+\.\s*|^\s*\*\s*|\n|\r|•|-)\s*/gm)
+                    .map(a => a.trim())
+                    .filter(a => a.length > 10 && /[a-zA-Z]/.test(a) && a.endsWith('.'));
+                }
+                // Motivation as list
+                const motivationList = motivationRaw ? motivationRaw.split(/,|\n|;|\.|•|-/).map(m => m.trim()).filter(m => m.length > 0) : [];
+                return (
+                  <div>
+                    {/* Summary Section */}
+                    {summary && (
+                      <div style={{marginBottom: '20px', background: 'linear-gradient(90deg, #f3e8ff 0%, #fce7f3 100%)', borderRadius: '12px', padding: '16px', boxShadow: '0 2px 8px #8b5cf622'}}>
+                        <div style={{display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px'}}>
+                          <FileText size={20} color="#8b5cf6" />
+                          <span style={{fontWeight: 600, color: '#8b5cf6', fontSize: '16px'}}>Summary</span>
+                        </div>
+                        <div style={{color: '#374151', fontSize: '15px', lineHeight: 1.6}}>{summary}</div>
                       </div>
-                    </div>
-                  );
-                })()}
-              </>
-            )}
+                    )}
+                    {/* Advice Section */}
+                    {adviceList.length > 0 && (
+                      <div style={{marginBottom: '20px', background: 'linear-gradient(90deg, #e0f2fe 0%, #f3e8ff 100%)', borderRadius: '12px', padding: '16px', boxShadow: '0 2px 8px #8b5cf622'}}>
+                        <div style={{display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px'}}>
+                          <CheckCircle size={20} color="#10b981" />
+                          <span style={{fontWeight: 600, color: '#10b981', fontSize: '16px'}}>Advice</span>
+                        </div>
+                        <ul style={{margin: 0, paddingLeft: '18px', color: '#374151', fontSize: '15px', lineHeight: 1.6}}>
+                          {adviceList.slice(0,3).map((ad, idx) => (
+                            <li key={idx} style={{marginBottom: '6px'}}>{ad}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    {/* Motivational Words Section */}
+                    {motivationList.length > 0 && (
+                      <div style={{marginBottom: '8px', background: 'linear-gradient(90deg, #fef9c3 0%, #e0f2fe 100%)', borderRadius: '12px', padding: '12px', boxShadow: '0 2px 8px #8b5cf622', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap'}}>
+                        <Zap size={18} color="#f59e0b" />
+                        <span style={{fontWeight: 600, color: '#f59e0b', fontSize: '15px', marginRight: '8px'}}>Motivational Words:</span>
+                        {motivationList.slice(0,5).map((word, idx) => (
+                          <span key={idx} style={{background: '#fef3c7', color: '#b45309', padding: '4px 10px', borderRadius: '9999px', fontSize: '14px', fontWeight: 500, marginRight: '4px'}}>{word}</span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
             <button style={{marginTop: '32px', background: 'linear-gradient(45deg, #8b5cf6 0%, #ec4899 100%)', color: 'white', padding: '12px 24px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: '500'}} onClick={() => setSelectedEntry(null)}>Close</button>
           </div>
         </div>
