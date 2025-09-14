@@ -549,39 +549,76 @@ function App() {
     return "neutral";
   }
 
-  // Gemini-based mood scoring (mock implementation)
-  async function getGeminiMoodScore(text) {
+  // Gemini-based scoring (mock implementation)
+  async function getGeminiScores(text) {
     // Replace this with Gemini API call for real implementation
-    // For now, use a simple heuristic: positiveWords +1, negativeWords -1, scale to 1-10
+    // For now, use a simple heuristic for mood, stress, energy
     const positiveWords = ["happy", "joy", "excited", "content", "hopeful", "grateful", "proud", "confident", "loving", "playful", "calm", "relaxed", "peaceful", "productive", "energized", "focused", "accomplished", "progress", "satisfaction", "gratitude", "motivated", "determined"];
     const negativeWords = ["sad", "lonely", "hurt", "angry", "frustrated", "anxious", "nervous", "insecure", "overwhelmed", "jealous", "confused", "awkward", "embarrassed", "guilty", "ashamed", "regretful", "resentful", "envious", "exhausted", "stressed"];
-    let score = 5;
+    const stressWords = ["stressed", "anxious", "overwhelmed", "nervous", "exhausted", "frustrated", "angry", "confused"];
+    const energyWords = ["energized", "active", "productive", "focused", "excited", "motivated", "determined", "accomplished"];
     const textLower = text.toLowerCase();
-    positiveWords.forEach(word => { if (textLower.includes(word)) score += 0.3; });
-    negativeWords.forEach(word => { if (textLower.includes(word)) score -= 0.3; });
-    score = Math.max(1, Math.min(10, score));
-    return score;
+    // Mood
+    let mood = 5;
+    positiveWords.forEach(word => { if (textLower.includes(word)) mood += 0.3; });
+    negativeWords.forEach(word => { if (textLower.includes(word)) mood -= 0.3; });
+    mood = Math.max(1, Math.min(10, mood));
+    // Stress
+    let stress = 5;
+    stressWords.forEach(word => { if (textLower.includes(word)) stress += 0.5; });
+    positiveWords.forEach(word => { if (textLower.includes(word)) stress -= 0.2; });
+    stress = Math.max(1, Math.min(10, stress));
+    // Energy
+    let energy = 5;
+    energyWords.forEach(word => { if (textLower.includes(word)) energy += 0.4; });
+    negativeWords.forEach(word => { if (textLower.includes(word)) energy -= 0.2; });
+    energy = Math.max(1, Math.min(10, energy));
+    return { mood, stress, energy };
   }
 
-  // Calculate daily mood averages using Gemini scores
+  // Calculate daily averages using Gemini scores
   async function calculateDailyMoodTrends(entries) {
-    // Group entries by date
-    const grouped = {};
-    for (const entry of entries) {
-      const dateStr = entry.timestamp instanceof Date ? entry.timestamp.toISOString().slice(0,10) : new Date(entry.timestamp).toISOString().slice(0,10);
-      if (!grouped[dateStr]) grouped[dateStr] = [];
-      grouped[dateStr].push(entry);
+    // Get today's date string
+    const today = new Date();
+    const todayStr = today.toISOString().slice(0, 10);
+
+    // Filter entries for today
+    const todayEntries = entries.filter(entry => {
+      const entryDate = entry.timestamp instanceof Date ? entry.timestamp.toISOString().slice(0,10) : new Date(entry.timestamp).toISOString().slice(0,10);
+      return entryDate === todayStr;
+    });
+
+    // Calculate today's averages
+    let todayMood = 7, todayStress = 5, todayEnergy = 6;
+    if (todayEntries.length > 0) {
+      const scoresArr = await Promise.all(todayEntries.map(e => getGeminiScores(e.transcript)));
+      todayMood = scoresArr.reduce((a,b) => a+b.mood, 0) / scoresArr.length;
+      todayStress = scoresArr.reduce((a,b) => a+b.stress, 0) / scoresArr.length;
+      todayEnergy = scoresArr.reduce((a,b) => a+b.energy, 0) / scoresArr.length;
     }
-    // For each day, get Gemini mood scores and average
-    const trends = [];
-    for (const date in grouped) {
-      const scores = await Promise.all(grouped[date].map(e => getGeminiMoodScore(e.transcript)));
-      const avgMood = scores.reduce((a,b) => a+b, 0) / scores.length;
-      trends.push({ date, mood: Number(avgMood.toFixed(2)) });
+
+    // Generate dummy data for previous 6 days
+    const dummyTrends = [];
+    for (let i = 6; i >= 1; i--) {
+      const d = new Date(today);
+      d.setDate(today.getDate() - i);
+      dummyTrends.push({
+        date: d.toISOString().slice(0, 10),
+        mood: Math.round(5 + Math.random() * 5 * 100) / 100,
+        stress: Math.round(3 + Math.random() * 4 * 100) / 100,
+        energy: Math.round(4 + Math.random() * 5 * 100) / 100
+      });
     }
-    // Sort by date ascending
-    trends.sort((a,b) => a.date.localeCompare(b.date));
-    return trends;
+
+    // Add today
+    dummyTrends.push({
+      date: todayStr,
+      mood: Number(todayMood.toFixed(2)),
+      stress: Number(todayStress.toFixed(2)),
+      energy: Number(todayEnergy.toFixed(2))
+    });
+
+    return dummyTrends;
   }
 
   const fetchEntries = async () => {
@@ -678,7 +715,7 @@ function App() {
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
           videoRef.current.playsInline = true;
-          videoRef.current.muted = true;
+          videoRef.current.muted = false;
           videoRef.current.play().catch(() => {});
         } else {
           // Try again after a short delay if ref not ready
@@ -990,8 +1027,8 @@ function App() {
             <YAxis domain={[0, 10]} />
             <Tooltip />
             <Line type="monotone" dataKey="mood" stroke="#8884d8" strokeWidth={3} />
+            <Line type="monotone" dataKey="stress" stroke="#ef4444" strokeWidth={3} />
             <Line type="monotone" dataKey="energy" stroke="#82ca9d" strokeWidth={3} />
-            <Line type="monotone" dataKey="confidence" stroke="#ffc658" strokeWidth={3} />
           </LineChart>
         </ResponsiveContainer>
       </div>
