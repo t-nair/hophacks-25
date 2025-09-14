@@ -174,7 +174,11 @@ const styles = {
     backgroundColor: '#111827',
     borderRadius: '12px',
     overflow: 'hidden',
-    marginBottom: '24px'
+    marginBottom: '24px',
+    minHeight: '256px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center'
   },
   video: {
     width: '100%',
@@ -456,7 +460,7 @@ function App() {
   const [activeScreen, setActiveScreen] = useState('home');
   const [entries, setEntries] = useState([]);
   const [selectedEntry, setSelectedEntry] = useState(null);
-  const [textEntry, setTextEntry] = useState('');
+  // Remove textEntry and textAreaRef from App, move to RecordScreen
   const [videoEntryStatus, setVideoEntryStatus] = useState('');
   const [goals, setGoals] = useState([]);
   const [isRecording, setIsRecording] = useState(false);
@@ -551,29 +555,31 @@ function App() {
 
   // Gemini-based scoring (mock implementation)
   async function getGeminiScores(text) {
-    // Replace this with Gemini API call for real implementation
-    // For now, use a simple heuristic for mood, stress, energy
-    const positiveWords = ["happy", "joy", "excited", "content", "hopeful", "grateful", "proud", "confident", "loving", "playful", "calm", "relaxed", "peaceful", "productive", "energized", "focused", "accomplished", "progress", "satisfaction", "gratitude", "motivated", "determined"];
-    const negativeWords = ["sad", "lonely", "hurt", "angry", "frustrated", "anxious", "nervous", "insecure", "overwhelmed", "jealous", "confused", "awkward", "embarrassed", "guilty", "ashamed", "regretful", "resentful", "envious", "exhausted", "stressed"];
-    const stressWords = ["stressed", "anxious", "overwhelmed", "nervous", "exhausted", "frustrated", "angry", "confused"];
-    const energyWords = ["energized", "active", "productive", "focused", "excited", "motivated", "determined", "accomplished"];
-    const textLower = text.toLowerCase();
-    // Mood
-    let mood = 5;
-    positiveWords.forEach(word => { if (textLower.includes(word)) mood += 0.3; });
-    negativeWords.forEach(word => { if (textLower.includes(word)) mood -= 0.3; });
-    mood = Math.max(1, Math.min(10, mood));
-    // Stress
-    let stress = 5;
-    stressWords.forEach(word => { if (textLower.includes(word)) stress += 0.5; });
-    positiveWords.forEach(word => { if (textLower.includes(word)) stress -= 0.2; });
-    stress = Math.max(1, Math.min(10, stress));
-    // Energy
-    let energy = 5;
-    energyWords.forEach(word => { if (textLower.includes(word)) energy += 0.4; });
-    negativeWords.forEach(word => { if (textLower.includes(word)) energy -= 0.2; });
-    energy = Math.max(1, Math.min(10, energy));
-    return { mood, stress, energy };
+  // Gemini prompt for therapist/career coach response
+  // You are a compassionate therapist and reflective career coach with over 12 years of industry experience helping people progress in their career, mental health, and well-being. Read the following entry from your client and respond with a single empathetic paragraph that blends emotional reflection and gentle, constructive advice. Do not use explicit section labels like 'Summary', 'Advice', or 'MotivationalWords' in your output. Do not include the user's original message in your output and follow the style guide provided.
+  // For now, this is a mock implementation. Replace with Gemini API call for real use.
+  // ...existing mock scoring logic...
+  const positiveWords = ["happy", "joy", "excited", "content", "hopeful", "grateful", "proud", "confident", "loving", "playful", "calm", "relaxed", "peaceful", "productive", "energized", "focused", "accomplished", "progress", "satisfaction", "gratitude", "motivated", "determined"];
+  const negativeWords = ["sad", "lonely", "hurt", "angry", "frustrated", "anxious", "nervous", "insecure", "overwhelmed", "jealous", "confused", "awkward", "embarrassed", "guilty", "ashamed", "regretful", "resentful", "envious", "exhausted", "stressed"];
+  const stressWords = ["stressed", "anxious", "overwhelmed", "nervous", "exhausted", "frustrated", "angry", "confused"];
+  const energyWords = ["energized", "active", "productive", "focused", "excited", "motivated", "determined", "accomplished"];
+  const textLower = text.toLowerCase();
+  // Mood
+  let mood = 5;
+  positiveWords.forEach(word => { if (textLower.includes(word)) mood += 0.3; });
+  negativeWords.forEach(word => { if (textLower.includes(word)) mood -= 0.3; });
+  mood = Math.max(1, Math.min(10, mood));
+  // Stress
+  let stress = 5;
+  stressWords.forEach(word => { if (textLower.includes(word)) stress += 0.5; });
+  positiveWords.forEach(word => { if (textLower.includes(word)) stress -= 0.2; });
+  stress = Math.max(1, Math.min(10, stress));
+  // Energy
+  let energy = 5;
+  energyWords.forEach(word => { if (textLower.includes(word)) energy += 0.4; });
+  negativeWords.forEach(word => { if (textLower.includes(word)) energy -= 0.2; });
+  energy = Math.max(1, Math.min(10, energy));
+  return { mood, stress, energy };
   }
 
   // Calculate daily averages using Gemini scores
@@ -659,29 +665,7 @@ function App() {
   };
 
   // Submit text entry to backend
-  const handleTextSubmit = async (e) => {
-    e.preventDefault();
-    if (!textEntry.trim()) return;
-    // Optimistically clear input and add temporary entry
-    const tempEntry = {
-      _id: Date.now(),
-      title: 'Text Entry',
-      timestamp: new Date(),
-      sentiment: { overall: getSentiment(textEntry), confidence: 1, emotions: {} },
-      transcript: textEntry,
-      highlight: ''
-    };
-    setEntries(prev => [tempEntry, ...prev]);
-    setTextEntry('');
-    try {
-      await axios.post('http://localhost:5000/submit_text', { text: textEntry });
-      fetchEntries(); // Refresh with backend data
-    } catch (err) {
-      alert('Failed to submit text entry');
-      // Optionally remove temp entry if failed
-      setEntries(prev => prev.filter(e => e._id !== tempEntry._id));
-    }
-  };
+  // Remove handleTextSubmit from App, move to RecordScreen
 
   // Upload video entry to backend
   const handleVideoUpload = async () => {
@@ -888,82 +872,154 @@ function App() {
     </div>
   );
 
-  const RecordScreen = () => (
-    <div style={{maxWidth: '800px', margin: '0 auto'}}>
-      <div style={styles.recordingCard}>
-        <div style={styles.recordingHeader}>
-          <h2 style={styles.recordingTitle}>Record Your Journal Entry</h2>
-          <p style={styles.recordingSubtitle}>Share your thoughts, feelings, and reflections</p>
-        </div>
-        <div style={{padding: '24px'}}>
-          {/* Text Entry Form */}
-          <form onSubmit={handleTextSubmit} style={{marginBottom: '24px'}}>
-            <textarea
-              value={textEntry}
-              onChange={e => setTextEntry(e.target.value)}
-              placeholder="Write your journal entry..."
-              rows={4}
-              style={{width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #ddd'}}
-            />
-            <button type="submit" style={styles.actionButton}>Submit Text Entry</button>
-          </form>
-          {/* Video Preview */}
-          <div style={styles.videoContainer}>
-            <video
-              ref={videoRef}
-              autoPlay
-              muted
-              playsInline
-              style={styles.video}
-            />
-            {!isRecording && (
-              <div style={styles.videoOverlay}>
-                <div style={{textAlign: 'center', color: 'white'}}>
-                  <Camera size={64} style={{margin: '0 auto 16px', opacity: 0.5}} />
-                  <p style={{fontSize: '18px', margin: 0}}>Click record to start your entry</p>
-                </div>
+  function RecordScreen() {
+    const [textEntry, setTextEntry] = useState('');
+    const textAreaRef = useRef(null);
+    const handleTextSubmit = async (e) => {
+      e.preventDefault();
+      if (!textEntry.trim()) return;
+      // Optimistically clear input and add temporary entry
+      const tempEntry = {
+        _id: Date.now(),
+        title: 'Text Entry',
+        timestamp: new Date(),
+        sentiment: { overall: getSentiment(textEntry), confidence: 1, emotions: {} },
+        transcript: textEntry,
+        highlight: ''
+      };
+      setEntries(prev => [tempEntry, ...prev]);
+      setTextEntry('');
+      // Restore focus after submit
+      if (textAreaRef.current) {
+        textAreaRef.current.focus();
+      }
+      try {
+        await axios.post('http://localhost:5000/submit_text', { text: textEntry });
+        fetchEntries(); // Refresh with backend data
+      } catch (err) {
+        alert('Failed to submit text entry');
+        // Optionally remove temp entry if failed
+        setEntries(prev => prev.filter(e => e._id !== tempEntry._id));
+      }
+    };
+    return (
+      <div>
+        <div style={{maxWidth: '800px', margin: '0 auto'}}>
+          <div style={styles.recordingCard}>
+            <div style={styles.recordingHeader}>
+              <h2 style={styles.recordingTitle}>Record Your Journal Entry</h2>
+              <p style={styles.recordingSubtitle}>Share your thoughts, feelings, and reflections</p>
+            </div>
+            <div style={{padding: '24px'}}>
+              {/* Text Entry Form */}
+              <form onSubmit={handleTextSubmit} style={{marginBottom: '24px'}}>
+                <textarea
+                  ref={textAreaRef}
+                  value={textEntry}
+                  onChange={e => setTextEntry(e.target.value)}
+                  placeholder="Write your journal entry..."
+                  rows={4}
+                  style={{width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #ddd'}}
+                />
+                <button type="submit" style={styles.actionButton}>Submit Text Entry</button>
+              </form>
+              {/* Video Preview with Orb Overlay when Recording, Orb with Get Started when Idle */}
+              <div style={styles.videoContainer}>
+                {isRecording ? (
+                  <>
+                    {/* Hidden video element for recording only */}
+                    <video
+                      ref={videoRef}
+                      autoPlay
+                      muted
+                      playsInline
+                      style={{display: 'none'}}
+                    />
+                    {/* Animated orb overlay while recording */}
+                    <div style={{
+                      position: 'absolute',
+                      top: '50%',
+                      left: '50%',
+                      transform: 'translate(-50%, -50%)',
+                      zIndex: 2,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      pointerEvents: 'none'
+                    }}>
+                      <div style={{
+                        width: '72px',
+                        height: '72px',
+                        borderRadius: '50%',
+                        background: 'radial-gradient(circle at 30% 30%, #8b5cf6 0%, #ec4899 100%)',
+                        boxShadow: '0 0 40px 12px #8b5cf655',
+                        animation: 'orbPulse 2.2s cubic-bezier(.4,0,.2,1) infinite',
+                        marginBottom: '12px'
+                      }}></div>
+                      <span style={{color: '#fff', fontSize: '18px', fontWeight: 500, textShadow: '0 2px 8px #000'}}>I'm here to listen</span>
+                      <style>{`
+                        @keyframes orbPulse {
+                          0% { transform: scale(1); box-shadow: 0 0 40px 12px #8b5cf655; }
+                          40% { transform: scale(1.08); box-shadow: 0 0 56px 20px #ec489955; }
+                          60% { transform: scale(1.15); box-shadow: 0 0 64px 24px #ec489955; }
+                          100% { transform: scale(1); box-shadow: 0 0 40px 12px #8b5cf655; }
+                        }
+                      `}</style>
+                    </div>
+                    <div style={styles.recordingIndicator}>
+                      <div style={styles.recordingDot}></div>
+                      <span>REC {formatTime(recordingTime)}</span>
+                    </div>
+                  </>
+                ) : (
+                  <div style={{height: '256px', background: '#111827', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'relative'}}>
+                    <div style={{
+                      width: '72px',
+                      height: '72px',
+                      borderRadius: '50%',
+                      background: 'radial-gradient(circle at 30% 30%, #8b5cf6 0%, #ec4899 100%)',
+                      boxShadow: '0 0 40px 12px #8b5cf655',
+                      marginBottom: '16px'
+                    }}></div>
+                    <span style={{color: '#fff', fontSize: '18px', fontWeight: 500, textShadow: '0 2px 8px #000'}}>I'm here to listen</span>
+                  </div>
+                )}
               </div>
-            )}
-            {isRecording && (
-              <div style={styles.recordingIndicator}>
-                <div style={styles.recordingDot}></div>
-                <span>REC {formatTime(recordingTime)}</span>
+              <div style={styles.controlsContainer}>
+                {!isRecording ? (
+                  <button
+                    onClick={startRecording}
+                    style={styles.recordButton}
+                    className="record-button"
+                  >
+                    <Video size={20} />
+                    Start Recording
+                  </button>
+                ) : (
+                  <button
+                    onClick={stopRecording}
+                    style={styles.stopButton}
+                    className="stop-button"
+                  >
+                    <StopCircle size={20} />
+                    Stop Recording
+                  </button>
+                )}
+                {/* Upload button after recording */}
+                {recordedChunks.length > 0 && !isRecording && (
+                  <button onClick={handleVideoUpload} style={styles.actionButton}>Upload Video Entry</button>
+                )}
               </div>
-            )}
+              {/* Video upload status */}
+              {videoEntryStatus && (
+                <div style={{marginTop: '16px', color: '#1d4ed8'}}>{videoEntryStatus}</div>
+              )}
+            </div>
           </div>
-          <div style={styles.controlsContainer}>
-            {!isRecording ? (
-              <button
-                onClick={startRecording}
-                style={styles.recordButton}
-                className="record-button"
-              >
-                <Video size={20} />
-                Start Recording
-              </button>
-            ) : (
-              <button
-                onClick={stopRecording}
-                style={styles.stopButton}
-                className="stop-button"
-              >
-                <StopCircle size={20} />
-                Stop Recording
-              </button>
-            )}
-            {/* Upload button after recording */}
-            {recordedChunks.length > 0 && !isRecording && (
-              <button onClick={handleVideoUpload} style={styles.actionButton}>Upload Video Entry</button>
-            )}
-          </div>
-          {/* Video upload status */}
-          {videoEntryStatus && (
-            <div style={{marginTop: '16px', color: '#1d4ed8'}}>{videoEntryStatus}</div>
-          )}
         </div>
       </div>
-    </div>
-  );
+    );
+  }
 
   const AnalyticsScreen = () => (
     <div>
@@ -1100,7 +1156,24 @@ function App() {
                 {entry.sentiment.overall}
               </span>
             </div>
-            <p style={styles.entryContent}>{entry.transcript}</p>
+            {/* If video entry, show thumbnail */}
+            {entry.transcript === '(Video entry uploaded)' ? (
+              <div style={{position: 'relative', marginBottom: '16px'}}>
+                <video
+                  src={entry.videoUrl || `/uploads/${entry.filename || 'latest_entry.webm'}`}
+                  style={{width: '100%', height: '180px', objectFit: 'cover', borderRadius: '8px', background: '#111827'}}
+                  preload="metadata"
+                  poster={entry.posterUrl}
+                  onLoadedMetadata={e => e.target.currentTime = 0.1}
+                  muted
+                />
+                <div style={{position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', background: 'rgba(0,0,0,0.5)', borderRadius: '50%', padding: '12px'}}>
+                  <Play size={32} color="#fff" />
+                </div>
+              </div>
+              ) : (
+              <p style={styles.entryContent}>{entry.transcript}</p>
+            )}
             <div style={styles.entryMeta}>
               <span>{entry.timestamp.toLocaleDateString()}</span>
               <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
@@ -1128,29 +1201,44 @@ function App() {
         }} onClick={() => setSelectedEntry(null)}>
           <div style={{background: 'white', padding: '32px', borderRadius: '16px', minWidth: '400px', maxWidth: '600px', boxShadow: '0 4px 24px rgba(0,0,0,0.2)'}} onClick={e => e.stopPropagation()}>
             <h2 style={{marginBottom: '16px'}}>Gemini Highlight</h2>
-            <p style={{fontWeight: 'bold', color: '#8b5cf6', marginBottom: '16px'}}>{selectedEntry.highlight || 'No highlight available.'}</p>
-            {/* Extract advice from Gemini highlight and show as insights */}
-            {selectedEntry.highlight && (
-              (() => {
-                // Try to extract advice from the highlight
-                const adviceMatch = selectedEntry.highlight.match(/(?:Advice:|advice:|\d\.|\n2\.|- |• )(.*)/i);
-                let advice = adviceMatch ? adviceMatch[1] : null;
-                // If multiple pieces of advice, split by common delimiters
-                let adviceList = advice ? advice.split(/\.|\n|;|,|•|-/).map(a => a.trim()).filter(a => a.length > 0) : [];
-                return (
-                  <div style={{marginTop: '16px'}}>
-                    <h4 style={{color: '#1e3a8a'}}>Advice / Insights</h4>
-                    <div style={{display: 'flex', gap: '8px', flexWrap: 'wrap'}}>
-                      {adviceList.length > 0
-                        ? adviceList.slice(0,3).map((ad, idx) => (
-                            <span key={idx} style={{background: '#dbeafe', color: '#1e40af', padding: '4px 12px', borderRadius: '9999px', fontSize: '14px'}}>{ad}</span>
-                          ))
-                        : <span style={{color: '#6b7280'}}>No advice found.</span>
-                      }
+            {!selectedEntry.highlight ? (
+              <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '80px'}}>
+                <div style={{
+                  width: '32px',
+                  height: '32px',
+                  border: '4px solid #8b5cf6',
+                  borderTop: '4px solid #ec4899',
+                  borderRadius: '50%',
+                  animation: 'spin 1s linear infinite',
+                  marginBottom: '12px'
+                }}></div>
+                <span style={{color: '#8b5cf6'}}>Loading highlight...</span>
+              </div>
+            ) : (
+              <>
+                <p style={{fontWeight: 'bold', color: '#8b5cf6', marginBottom: '16px'}}>{selectedEntry.highlight}</p>
+                {/* Extract advice from Gemini highlight and show as insights */}
+                {(() => {
+                  // Try to extract advice from the highlight
+                  const adviceMatch = selectedEntry.highlight.match(/(?:Advice:|advice:|\d\.|\n2\.|- |• )(.*)/i);
+                  let advice = adviceMatch ? adviceMatch[1] : null;
+                  // If multiple pieces of advice, split by common delimiters
+                  let adviceList = advice ? advice.split(/\.|\n|;|,|•|-/).map(a => a.trim()).filter(a => a.length > 0) : [];
+                  return (
+                    <div style={{marginTop: '16px'}}>
+                      <h4 style={{color: '#1e3a8a'}}>Advice / Insights</h4>
+                      <div style={{display: 'flex', gap: '8px', flexWrap: 'wrap'}}>
+                        {adviceList.length > 0
+                          ? adviceList.slice(0,3).map((ad, idx) => (
+                              <span key={idx} style={{background: '#dbeafe', color: '#1e40af', padding: '4px 12px', borderRadius: '9999px', fontSize: '14px'}}>{ad}</span>
+                            ))
+                          : <span style={{color: '#6b7280'}}>No advice found.</span>
+                        }
+                      </div>
                     </div>
-                  </div>
-                );
-              })()
+                  );
+                })()}
+              </>
             )}
             <button style={{marginTop: '32px', background: 'linear-gradient(45deg, #8b5cf6 0%, #ec4899 100%)', color: 'white', padding: '12px 24px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: '500'}} onClick={() => setSelectedEntry(null)}>Close</button>
           </div>
