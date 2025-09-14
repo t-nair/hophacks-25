@@ -447,6 +447,35 @@ styleSheet.innerHTML = `
   .action-button:hover {
     background: linear-gradient(45deg, #7c3aed 0%, #be185d 100%) !important;
   }
+  
+  .heatmap-container {
+  font-family: system-ui, sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1rem;
+}
+.heatmap-title {
+  font-size: 1.25rem;
+  margin-bottom: 0.75rem;
+  font-weight: 600;
+}
+.heatmap {
+  display: flex;
+  gap: 2px;
+}
+.week {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.day {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  background: #e5e7eb;
+}
+
 `;
 document.head.appendChild(styleSheet);
 
@@ -952,10 +981,85 @@ function App() {
     </div>
   );
 
+  function renderHeatmap(year, colors, elementId) {
+  const container = document.getElementById(elementId);
+  if (!container) return;
+
+  container.innerHTML = "";
+  container.className = "heatmap-container";
+
+  const title = document.createElement("h2");
+  title.className = "heatmap-title";
+  title.textContent = `${year} Heatmap`;
+  container.appendChild(title);
+
+  const heatmap = document.createElement("div");
+  heatmap.className = "heatmap";
+
+  const start = new Date(year, 0, 1);
+  const end = new Date(year, 11, 31);
+  const days = [];
+
+  let d = new Date(start);
+  while (d <= end) {
+    days.push(new Date(d));
+    d.setDate(d.getDate() + 1);
+  }
+
+  const weeks = [];
+  let week = [];
+  days.forEach(day => {
+    if (day.getDay() === 0 && week.length > 0) {
+      weeks.push(week);
+      week = [];
+    }
+    week.push(day);
+  });
+  if (week.length > 0) weeks.push(week);
+
+  weeks.forEach(week => {
+    const col = document.createElement("div");
+    col.className = "week";
+
+    for (let i = 0; i < 7; i++) {
+      const day = week.find(d => d.getDay() === i);
+      const div = document.createElement("div");
+      div.className = "day";
+
+      if (day) {
+        const dateStr = day.toISOString().slice(0, 10);
+        div.style.backgroundColor = colors[dateStr] || "#e5e7eb";
+        div.title = dateStr;
+        div.textContent = day.getDate();
+        div.style.fontSize = "0.55rem";
+        div.style.color = "#111";
+        div.style.textAlign = "center";
+        div.style.lineHeight = "18px";
+        div.style.fontWeight = "500";
+      }
+      col.appendChild(div);
+    }
+    heatmap.appendChild(col);
+  });
+
+  container.appendChild(heatmap);
+}
+
+useEffect(() => {
+  const colors = {
+    "2025-01-01": "rgb(220,38,38)",
+    "2025-01-02": "rgb(34,197,94)",
+    "2025-02-14": "rgb(59,130,246)"
+  };
+  renderHeatmap(2025, colors, "calendar-heatmap");
+}, []);
+
+
   const AnalyticsScreen = () => (
     <div>
       <h2 style={styles.sectionTitle}>Analytics Dashboard</h2>
-      
+
+
       {/* Sentiment Distribution */}
       <div style={styles.twoColumnGrid}>
         <div style={styles.chartCard}>
@@ -1018,8 +1122,11 @@ function App() {
             <Line type="monotone" dataKey="confidence" stroke="#ffc658" strokeWidth={3} />
           </LineChart>
         </ResponsiveContainer>
-      </div>
+          {/* Heatmap container */}
+          <div id="calendar-heatmap" style={{ marginTop: "24px" }}></div>
 
+      </div>
+      
       {/* Daily Summaries */}
       <div style={styles.chartCard}>
         <h3 style={styles.chartTitle}>Daily Insights</h3>
