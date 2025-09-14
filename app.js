@@ -585,21 +585,45 @@ function App() {
   }
 
   const fetchEntries = async () => {
-    try {
-      const res = await axios.get('http://localhost:5000/entries');
-      // Convert backend entries to frontend format
-      const backendEntries = res.data.map((entry, idx) => {
+  try {
+    const res = await axios.get('http://localhost:5000/entries');
+    const backendEntries = res.data.map((entry, idx) => {
+      if (entry.type === "video") {
+        return {
+          _id: idx + 1000,
+          title: "Video Entry",
+          timestamp: new Date(entry.timestamp),
+          sentiment: { overall: "neutral", confidence: 1, emotions: {} },
+          transcript: "(Video entry uploaded)",
+          highlight: entry.highlight || "",
+          videoUrl: `http://localhost:5000/videos/${entry.filename}`
+        };
+      } else {
         const sentiment = getSentiment(entry.text || "");
         return {
           _id: idx + 1000,
-          title: entry.text ? 'Text Entry' : 'Video Entry',
+          title: "Text Entry",
           timestamp: new Date(entry.timestamp),
           sentiment: { overall: sentiment, confidence: 1, emotions: {} },
-          transcript: entry.text || '(Video entry uploaded)',
-          highlight: entry.highlight || ''
+          transcript: entry.text,
+          highlight: entry.highlight || ""
         };
-      });
-      const allEntries = [...backendEntries, ...mockEntries];
+      }
+    });
+    const allEntries = [...backendEntries, ...mockEntries];
+    setEntries(allEntries);
+    // Sentiment distribution update, etc.
+    calculateDailyMoodTrends(allEntries).then(moodTrends => {
+      setAnalytics(a => ({
+        ...a,
+        moodTrends
+      }));
+    });
+  } catch (err) {
+    setEntries([...mockEntries]);
+  }
+};
+    const allEntries = [...backendEntries, ...mockEntries];
       setEntries(allEntries);
       // Update analytics sentiment distribution
       const sentimentCounts = { positive: 0, neutral: 0, negative: 0 };
@@ -1064,6 +1088,16 @@ function App() {
               </span>
             </div>
             <p style={styles.entryContent}>{entry.transcript}</p>
+              {entry.videoUrl && (
+                <video
+                  controls
+                  width="100%"
+                  style={{ borderRadius: "8px", marginTop: "12px" }}
+                >
+                  <source src={entry.videoUrl} type="video/webm" />
+                  Your browser does not support the video tag.
+                </video>
+              )}
             <div style={styles.entryMeta}>
               <span>{entry.timestamp.toLocaleDateString()}</span>
               <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>

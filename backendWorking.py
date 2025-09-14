@@ -25,10 +25,8 @@ def save_insights(insights):
     with open(INSIGHTS_FILE, "w") as f:
         json.dump(insights, f)
 
-text_entries = load_entries()
-
 # Set your Gemini API key here
-GEMINI_API_KEY = "AIzaSyAEZXzXxt1SR5Xa1sTLJwmMoRRgYYd9jos"
+GEMINI_API_KEY = "YOUR_API_KEY"
 genai.configure(api_key=GEMINI_API_KEY)
 model = genai.GenerativeModel("gemini-2.5-flash")
 
@@ -39,35 +37,31 @@ def submit_text():
     if not text:
         return jsonify({"error": "No text provided"}), 400
 
-    # Always reload entries from file to avoid losing previous entries
     entries = load_entries()
-    entry = {"text": text, "timestamp": datetime.now().isoformat()}
-    entries.append(entry)
+    entry = {"type": "text", "text": text, "timestamp": datetime.now().isoformat()}
 
-    # Generate highlights using Gemini for the new entry
+    # Generate highlight
     try:
         prompt = (
             "You are a compassionate therapist and reflective coach. "
             "Read the following journal entry and respond with:\n"
-            "Summary: (A ~50-word empathetic summary capturing the writer’s emotions, mindset, and underlying themes.)\n"
-            "Advice: (One to two gentle, constructive pieces of advice tailored to their situation.)\n"
-            "MotivationalWords: (A comma-separated list of 3-5 motivational words or phrases relevant to the writer's situation.)\n"
-            "\nKeep the tone warm, supportive, and practical. "
-            "Do not repeat the journal entry verbatim—summarize it in your own words.\n"
+            "Summary: (~50-word empathetic summary)\n"
+            "Advice: (1–2 constructive tips)\n"
+            "MotivationalWords: (3–5 uplifting words)\n\n"
             f"Journal entry:\n{text}"
         )
         response = model.generate_content(prompt)
-        highlight = response.text
-        entry["highlight"] = highlight
+        entry["highlight"] = response.text
     except Exception as e:
         entry["highlight"] = f"Error generating highlight: {str(e)}"
 
+    entries.append(entry)
     save_entries(entries)
 
-    # Generate overall insights for all entries
+    # Generate overall insights
     try:
-        all_text = "\n".join([e["text"] for e in entries])
-        prompt = f"Provide key insights and a summary for the following journal entries:\n{all_text}"
+        all_text = "\n".join([e.get("text", "") for e in entries if e["type"] == "text"])
+        prompt = f"Provide key insights and a summary for these journal entries:\n{all_text}"
         response = model.generate_content(prompt)
         insights = response.text
         save_insights({"insights": insights, "timestamp": datetime.now().isoformat()})
@@ -76,15 +70,9 @@ def submit_text():
 
     return jsonify({"message": "Text entry saved", "entry": entry})
 
-@app.route("/insights", methods=["GET"])
-def get_insights():
-    if os.path.exists(INSIGHTS_FILE):
-        with open(INSIGHTS_FILE, "r") as f:
-            return jsonify(json.load(f))
-    return jsonify({"error": "No insights found."}), 404
-
-
-# Video upload endpoint
+# ----------------------------
+# VIDEO UPLOADS
+# ----------------------------
 UPLOAD_FOLDER = "uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
@@ -92,28 +80,42 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 def upload_video():
     if "video" not in request.files:
         return jsonify({"error": "No video uploaded"}), 400
+
     video = request.files["video"]
     timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
     filename = f"{timestamp}_{video.filename}"
     path = os.path.join(UPLOAD_FOLDER, filename)
     video.save(path)
+
+    # Save video entry
+    entries = load_entries()
+    entry = {
+        "type": "video",
+        "filename": filename,
+        "timestamp": datetime.now().isoformat(),
+        "highlight": "Video entry uploaded."
+    }
+    entries.append(entry)
+    save_entries(entries)
+
     return jsonify({"message": "Video uploaded successfully", "filename": filename})
 
-# Entries endpoint
+# ----------------------------
+# ENTRIES
+# ----------------------------
 @app.route("/entries", methods=["GET"])
 def get_entries():
     entries = load_entries()
-    # Load latest overall insight
     overall_highlight = None
     if os.path.exists(INSIGHTS_FILE):
         with open(INSIGHTS_FILE, "r") as f:
             data = json.load(f)
             overall_highlight = data.get("insights")
-    # Attach highlight to each entry
+
     for entry in entries:
         if not entry.get("highlight"):
             entry["highlight"] = overall_highlight or "No highlight available."
-    # Sort entries from most recent to least recent
+
     entries_sorted = sorted(entries, key=lambda e: e["timestamp"], reverse=True)
     return jsonify(entries_sorted)
 
