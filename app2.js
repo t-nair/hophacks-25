@@ -1218,52 +1218,57 @@ function App() {
       </div>
 
       <div style={styles.entriesGrid}>
-        {entries.map((entry) => (
-          <div key={entry._id} style={styles.entryCard} className="entry-card" onClick={() => setSelectedEntry(entry)}>
-            <div style={styles.entryCardHeader}>
-              <h3 style={styles.entryTitle}>{entry.title}</h3>
-              <span style={{
-                ...styles.sentimentBadge,
-                ...(entry.sentiment.overall === 'positive' ? styles.sentimentPositive : 
-                   entry.sentiment.overall === 'negative' ? styles.sentimentNegative : styles.sentimentNeutral)
-              }}>
-                {entry.sentiment.overall}
-              </span>
-            </div>
-            {/* If video entry, show thumbnail */}
-            {entry.transcript === '(Video entry uploaded)' && entry.videoUrl ? (
-              <div style={{position: 'relative', marginBottom: '16px'}}>
-                <video
-                  src={entry.videoUrl}
-                  style={{width: '100%', height: '180px', objectFit: 'cover', borderRadius: '8px', background: '#111827'}}
-                  preload="metadata"
-                  onLoadedMetadata={e => { try { e.target.currentTime = 0.1; } catch {} }}
-                  muted
-                />
-                <div style={{position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', background: 'rgba(0,0,0,0.5)', borderRadius: '50%', padding: '12px'}}>
-                  <Play size={32} color="#fff" />
+        {entries.map((entry) => {
+          const sentiment = entry.sentiment || {};
+          const overall = sentiment.overall || 'neutral';
+          const confidence = typeof sentiment.confidence === 'number' ? sentiment.confidence : 1;
+          return (
+            <div key={entry._id} style={styles.entryCard} className="entry-card" onClick={() => setSelectedEntry(entry)}>
+              <div style={styles.entryCardHeader}>
+                <h3 style={styles.entryTitle}>{entry.title}</h3>
+                <span style={{
+                  ...styles.sentimentBadge,
+                  ...(overall === 'positive' ? styles.sentimentPositive : 
+                     overall === 'negative' ? styles.sentimentNegative : styles.sentimentNeutral)
+                }}>
+                  {overall}
+                </span>
+              </div>
+              {/* If video entry, show thumbnail */}
+              {entry.transcript === '(Video entry uploaded)' && entry.videoUrl ? (
+                <div style={{position: 'relative', marginBottom: '16px'}}>
+                  <video
+                    src={entry.videoUrl}
+                    style={{width: '100%', height: '180px', objectFit: 'cover', borderRadius: '8px', background: '#111827'}}
+                    preload="metadata"
+                    onLoadedMetadata={e => { try { e.target.currentTime = 0.1; } catch {} }}
+                    muted
+                  />
+                  <div style={{position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', background: 'rgba(0,0,0,0.5)', borderRadius: '50%', padding: '12px'}}>
+                    <Play size={32} color="#fff" />
+                  </div>
+                </div>
+              ) : (
+                <p style={styles.entryContent}>{entry.transcript}</p>
+              )}
+              <div style={styles.entryMeta}>
+                <span>{new Date(entry.timestamp).toLocaleDateString()}</span>
+                <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
+                  <Heart size={16} color="#ef4444" />
+                  <span>{Math.round(confidence * 100)}% confidence</span>
                 </div>
               </div>
-            ) : (
-              <p style={styles.entryContent}>{entry.transcript}</p>
-            )}
-            <div style={styles.entryMeta}>
-              <span>{entry.timestamp.toLocaleDateString()}</span>
-              <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
-                <Heart size={16} color="#ef4444" />
-                <span>{Math.round(entry.sentiment.confidence * 100)}% confidence</span>
+              {/* Emotion indicators */}
+              <div style={styles.emotionTags}>
+                {Object.entries(sentiment.emotions || {}).map(([emotion, score]) => (
+                  <span key={emotion} style={styles.emotionTag}>
+                    {emotion}: {Math.round(score * 10)}/10
+                  </span>
+                ))}
               </div>
             </div>
-            {/* Emotion indicators */}
-            <div style={styles.emotionTags}>
-              {Object.entries(entry.sentiment.emotions || {}).map(([emotion, score]) => (
-                <span key={emotion} style={styles.emotionTag}>
-                  {emotion}: {Math.round(score * 10)}/10
-                </span>
-              ))}
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Highlight Modal */}
