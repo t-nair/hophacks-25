@@ -97,6 +97,17 @@ def upload_video():
     filename = f"{timestamp}_{video.filename}"
     path = os.path.join(UPLOAD_FOLDER, filename)
     video.save(path)
+
+    # Add video entry to entries.json
+    entries = load_entries()
+    entry = {
+        "type": "video",
+        "filename": filename,
+        "timestamp": datetime.now().isoformat()
+    }
+    entries.append(entry)
+    save_entries(entries)
+
     return jsonify({"message": "Video uploaded successfully", "filename": filename})
 
 # Entries endpoint
