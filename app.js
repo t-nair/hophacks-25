@@ -455,9 +455,84 @@ styleSheet.innerHTML = `
 document.head.appendChild(styleSheet);
 
 function App() {
+  // Add Goal Modal State
+  const [showGoalModal, setShowGoalModal] = useState(false);
+  const [newGoalName, setNewGoalName] = useState('');
+  const [newGoalCategory, setNewGoalCategory] = useState('health');
+  const goalInputRef = useRef(null);
+  useEffect(() => {
+    if (showGoalModal && goalInputRef.current) {
+      goalInputRef.current.focus();
+    }
+  }, [showGoalModal, newGoalName]);
   // State Management
-  const [currentUser, setCurrentUser] = useState({ id: '1', name: 'Alex', preferences: {} });
-  const [activeScreen, setActiveScreen] = useState('home');
+  const [currentUser, setCurrentUser] = useState({ id: '1', name: 'BlueJay', preferences: {} });
+  // Start on entry screen
+  const [activeScreen, setActiveScreen] = useState('entry');
+  // Entry/Landing Screen
+  const EntryScreen = () => (
+    <div className="entry-landing-bg" style={{height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden'}}>
+      <style>{`
+        .entry-landing-bg {
+          background: linear-gradient(135deg, #7c3aed 0%, #db2777 100%);
+          position: relative;
+        }
+        .entry-landing-bg::before {
+          content: '';
+          position: absolute;
+          left: 0; top: 0; right: 0; bottom: 0;
+          background: #fff;
+          opacity: 1;
+          animation: fadeOutOverlay 1.5s cubic-bezier(.4,0,.2,1) forwards;
+          z-index: 2;
+        }
+        @keyframes fadeOutOverlay {
+          0% { opacity: 1; }
+          100% { opacity: 0; }
+        }
+        @keyframes waveMove {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-120px); }
+        }
+        @keyframes sineWaveText {
+          0% { letter-spacing: 24px; opacity: 0; transform: translateY(0); }
+          30% { opacity: 1; }
+          50% { letter-spacing: 2px; transform: translateY(-12px); }
+          70% { letter-spacing: 2px; transform: translateY(12px); }
+          100% { letter-spacing: 2px; opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
+      <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 2}}>
+        <div style={{display: 'flex', alignItems: 'center', marginBottom: 12}}>
+          <div style={{width: 72, height: 72, borderRadius: 18, background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 8px 32px #0002', marginRight: 24}}>
+            <Brain size={44} color="#fff" />
+          </div>
+          <div style={{display: 'flex', flexDirection: 'column', alignItems: 'flex-start'}}>
+            <h1 style={{fontSize: 56, fontWeight: 700, color: '#fff', letterSpacing: 2, margin: 0, position: 'relative', animation: 'sineWaveText 1.6s cubic-bezier(.4,0,.2,1)'}}>
+              sine
+              <div style={{position: 'absolute', left: 0, right: 0, top: 60, width: '160px', margin: '0 auto', display: 'flex', justifyContent: 'center'}}>
+                <svg width="160" height="32" viewBox="0 0 160 32">
+                  <path d="M0 16 Q 20 0, 40 16 T 80 16 T 120 16 T 160 16" stroke="#fff" strokeWidth="4" fill="none" />
+                </svg>
+              </div>
+            </h1>
+          </div>
+        </div>
+        <h2 style={{fontSize: 32, fontWeight: 400, color: '#fff', opacity: 0.85, marginBottom: 40, letterSpacing: 1, textShadow: '0 2px 12px #8b5cf655'}}>find your rhythm</h2>
+        <button
+          style={{padding: '18px 56px', fontSize: 22, fontWeight: 600, borderRadius: 14, background: '#000', color: '#fff', border: 'none', boxShadow: '0 4px 16px #0002', cursor: 'pointer', transition: 'all 0.2s', marginTop: 12, letterSpacing: 1}}
+          onClick={() => setActiveScreen('home')}
+        >
+          Enter Dashboard
+        </button>
+      </div>
+      {/* Decorative animated background waves */}
+      <svg width="100%" height="120" viewBox="0 0 1440 120" style={{position: 'absolute', bottom: 0, left: 0, zIndex: 1}}>
+        <path d="M0,40 Q360,120 720,40 T1440,40" fill="none" stroke="#fff" strokeOpacity="0.12" strokeWidth="8" />
+        <path d="M0,80 Q360,0 720,80 T1440,80" fill="none" stroke="#fff" strokeOpacity="0.18" strokeWidth="6" />
+      </svg>
+    </div>
+  );
   const [entries, setEntries] = useState([]);
   const [selectedEntry, setSelectedEntry] = useState(null);
   // Remove textEntry and textAreaRef from App, move to RecordScreen
@@ -632,14 +707,18 @@ function App() {
       const res = await axios.get('http://localhost:5000/entries');
       // Convert backend entries to frontend format
       const backendEntries = res.data.map((entry, idx) => {
+        // Detect video entry by absence of text and presence of filename
+        const isVideo = entry.filename !== undefined;
         const sentiment = getSentiment(entry.text || "");
         return {
           _id: idx + 1000,
           title: entry.text ? 'Text Entry' : 'Video Entry',
           timestamp: new Date(entry.timestamp),
           sentiment: { overall: sentiment, confidence: 1, emotions: {} },
-          transcript: entry.text || '(Video entry uploaded)',
-          highlight: entry.highlight || ''
+          transcript: entry.text || (isVideo ? '(Video entry uploaded)' : ''),
+          highlight: entry.highlight || '',
+          filename: entry.filename,
+          videoUrl: isVideo ? `http://localhost:5000/videos/${entry.filename}` : undefined
         };
       });
       const allEntries = [...backendEntries, ...mockEntries];
@@ -764,7 +843,7 @@ function App() {
         <div style={styles.logo}>
           <Brain size={24} />
         </div>
-        <h1 style={styles.logoTitle}>SuperJournal</h1>
+        <h1 style={styles.logoTitle}>sine</h1>
       </div>
       
       <nav style={styles.nav}>
@@ -1157,21 +1236,20 @@ function App() {
               </span>
             </div>
             {/* If video entry, show thumbnail */}
-            {entry.transcript === '(Video entry uploaded)' ? (
+            {entry.transcript === '(Video entry uploaded)' && entry.videoUrl ? (
               <div style={{position: 'relative', marginBottom: '16px'}}>
                 <video
-                  src={entry.videoUrl || `/uploads/${entry.filename || 'latest_entry.webm'}`}
+                  src={entry.videoUrl}
                   style={{width: '100%', height: '180px', objectFit: 'cover', borderRadius: '8px', background: '#111827'}}
                   preload="metadata"
-                  poster={entry.posterUrl}
-                  onLoadedMetadata={e => e.target.currentTime = 0.1}
+                  onLoadedMetadata={e => { try { e.target.currentTime = 0.1; } catch {} }}
                   muted
                 />
                 <div style={{position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', background: 'rgba(0,0,0,0.5)', borderRadius: '50%', padding: '12px'}}>
                   <Play size={32} color="#fff" />
                 </div>
               </div>
-              ) : (
+            ) : (
               <p style={styles.entryContent}>{entry.transcript}</p>
             )}
             <div style={styles.entryMeta}>
@@ -1251,12 +1329,15 @@ function App() {
     <div>
       <div style={styles.sectionHeader}>
         <h2 style={styles.sectionTitle}>My Goals</h2>
-        <button style={{...styles.actionButton, background: 'linear-gradient(45deg, #10b981 0%, #3b82f6 100%)'}} className="action-button">
+        <button
+          style={{...styles.actionButton, background: 'linear-gradient(45deg, #10b981 0%, #3b82f6 100%)'}}
+          className="action-button"
+          onClick={() => setShowGoalModal(true)}
+        >
           <Plus size={20} />
           Add Goal
         </button>
       </div>
-
       <div style={styles.goalsGrid}>
         {goals.map((goal, index) => (
           <div key={index} style={styles.goalCard}>
@@ -1264,31 +1345,31 @@ function App() {
               <h3 style={styles.goalTitle}>{goal.goal}</h3>
               <Target size={20} color="#3b82f6" />
             </div>
-            
             <div style={styles.progressContainer}>
               <div style={styles.progressHeader}>
                 <span style={styles.progressLabel}>Progress</span>
                 <span style={styles.progressValue}>{goal.progress}%</span>
               </div>
               <div style={styles.progressBar}>
-                <div 
+                <div
                   style={{
                     ...styles.progressFill,
-                    backgroundColor: goal.progress >= 80 ? '#10b981' : 
-                                   goal.progress >= 50 ? '#f59e0b' : '#ef4444',
+                    backgroundColor:
+                      goal.progress >= 80 ? '#10b981'
+                      : goal.progress >= 50 ? '#f59e0b'
+                      : '#ef4444',
                     width: `${goal.progress}%`
                   }}
-                ></div>
+                />
               </div>
             </div>
-            
             <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}>
               <span style={{
                 ...styles.categoryBadge,
-                ...(goal.category === 'health' ? styles.categoryHealth :
-                   goal.category === 'work' ? styles.categoryWork :
-                   goal.category === 'learning' ? styles.categoryLearning :
-                   styles.categoryDefault)
+                ...(goal.category === 'health' ? styles.categoryHealth
+                  : goal.category === 'work' ? styles.categoryWork
+                  : goal.category === 'learning' ? styles.categoryLearning
+                  : styles.categoryDefault)
               }}>
                 {goal.category}
               </span>
@@ -1299,11 +1380,66 @@ function App() {
           </div>
         ))}
       </div>
+      {/* Add Goal Modal */}
+      {showGoalModal && (
+        <div style={{position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000}} onClick={() => setShowGoalModal(false)}>
+          <div style={{background: 'white', padding: '32px', borderRadius: '16px', minWidth: '320px', boxShadow: '0 4px 24px rgba(0,0,0,0.2)'}} onClick={e => e.stopPropagation()}>
+            <h2 style={{marginBottom: '16px'}}>Add a New Goal</h2>
+            {/* Input will stay focused after typing due to useEffect in App */}
+            <form onSubmit={e => {
+              e.preventDefault();
+              if (!newGoalName.trim()) return;
+              setGoals(prev => [
+                ...prev,
+                {
+                  goal: newGoalName,
+                  progress: 0,
+                  target: 100,
+                  category: newGoalCategory
+                }
+              ]);
+              setShowGoalModal(false);
+              setNewGoalName('');
+              setNewGoalCategory('health');
+            }}>
+              <div style={{marginBottom: '16px'}}>
+                <label style={{fontWeight: 500, marginBottom: 4, display: 'block'}}>Goal Name</label>
+                <input
+                  ref={goalInputRef}
+                  type="text"
+                  value={newGoalName}
+                  onChange={e => setNewGoalName(e.target.value)}
+                  style={{width: '100%', padding: '8px', borderRadius: '8px', border: '1px solid #ddd'}}
+                  placeholder="Enter your goal..."
+                  required
+                />
+              </div>
+              <div style={{marginBottom: '16px'}}>
+                <label style={{fontWeight: 500, marginBottom: 4, display: 'block'}}>Category</label>
+                <select
+                  value={newGoalCategory}
+                  onChange={e => setNewGoalCategory(e.target.value)}
+                  style={{width: '100%', padding: '8px', borderRadius: '8px', border: '1px solid #ddd'}}
+                >
+                  <option value="health">Health</option>
+                  <option value="work">Work</option>
+                  <option value="learning">Learning</option>
+                  <option value="wellness">Wellness</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              <button type="submit" style={{...styles.actionButton, width: '100%', marginTop: '8px'}}>Add Goal</button>
+            </form>
+            <button style={{marginTop: '16px', background: '#eee', color: '#333', padding: '8px 16px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: '500'}} onClick={() => setShowGoalModal(false)}>Cancel</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 
   const renderScreen = () => {
     switch(activeScreen) {
+      case 'entry': return <EntryScreen />;
       case 'home': return <DashboardScreen />;
       case 'record': return <RecordScreen />;
       case 'entries': return <EntriesScreen />;
@@ -1313,6 +1449,9 @@ function App() {
     }
   };
 
+  if (activeScreen === 'entry') {
+    return renderScreen();
+  }
   return (
     <div style={styles.app}>
       <NavigationSidebar />
