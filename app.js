@@ -610,8 +610,13 @@ function App() {
   // Fetch entries from backend on mount
   useEffect(() => {
     setAnalytics(mockAnalytics);
-    setGoals(mockAnalytics.goalProgress);
     fetchEntries();
+    // Load goals from backend
+    axios.get('http://localhost:5000/goals')
+      .then(res => {
+        if (Array.isArray(res.data)) setGoals(res.data);
+      })
+      .catch(() => setGoals([]));
   }, []);
 
   // Fetch entries from backend
@@ -1279,6 +1284,16 @@ function App() {
         }} onClick={() => setSelectedEntry(null)}>
           <div style={{background: 'white', padding: '32px', borderRadius: '16px', minWidth: '400px', maxWidth: '600px', boxShadow: '0 4px 24px rgba(0,0,0,0.2)'}} onClick={e => e.stopPropagation()}>
             <h2 style={{marginBottom: '16px'}}>Gemini Highlight</h2>
+            {/* If video entry, show playable video */}
+            {selectedEntry.videoUrl ? (
+              <div style={{marginBottom: '16px'}}>
+                <video
+                  src={selectedEntry.videoUrl}
+                  controls
+                  style={{width: '100%', borderRadius: '8px', background: '#111827'}}
+                />
+              </div>
+            ) : null}
             {!selectedEntry.highlight ? (
               <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '80px'}}>
                 <div style={{
@@ -1386,18 +1401,32 @@ function App() {
           <div style={{background: 'white', padding: '32px', borderRadius: '16px', minWidth: '320px', boxShadow: '0 4px 24px rgba(0,0,0,0.2)'}} onClick={e => e.stopPropagation()}>
             <h2 style={{marginBottom: '16px'}}>Add a New Goal</h2>
             {/* Input will stay focused after typing due to useEffect in App */}
-            <form onSubmit={e => {
+            <form onSubmit={async e => {
               e.preventDefault();
               if (!newGoalName.trim()) return;
-              setGoals(prev => [
-                ...prev,
-                {
+              // Save to backend
+              try {
+                await axios.post('http://localhost:5000/add_goal', {
                   goal: newGoalName,
                   progress: 0,
                   target: 100,
                   category: newGoalCategory
-                }
-              ]);
+                });
+                // Reload goals from backend
+                const res = await axios.get('http://localhost:5000/goals');
+                if (Array.isArray(res.data)) setGoals(res.data);
+              } catch {
+                // Fallback: add locally
+                setGoals(prev => [
+                  ...prev,
+                  {
+                    goal: newGoalName,
+                    progress: 0,
+                    target: 100,
+                    category: newGoalCategory
+                  }
+                ]);
+              }
               setShowGoalModal(false);
               setNewGoalName('');
               setNewGoalCategory('health');
