@@ -10,6 +10,40 @@ CORS(app)
 
 TEXT_FILE = "entries.json"
 INSIGHTS_FILE = "insights.json"
+GOALS_FILE = os.path.join("data", "goals.json")
+def load_goals():
+    if os.path.exists(GOALS_FILE):
+        with open(GOALS_FILE, "r") as f:
+            return json.load(f)
+    return []
+
+def save_goals(goals):
+    with open(GOALS_FILE, "w") as f:
+        json.dump(goals, f)
+# --- GOALS ENDPOINTS ---
+@app.route("/goals", methods=["GET"])
+def get_goals():
+    return jsonify(load_goals())
+
+@app.route("/add_goal", methods=["POST"])
+def add_goal():
+    data = request.json
+    goal = data.get("goal")
+    category = data.get("category", "other")
+    target = data.get("target", 100)
+    progress = data.get("progress", 0)
+    if not goal:
+        return jsonify({"error": "No goal provided"}), 400
+    goals = load_goals()
+    goals.append({
+        "goal": goal,
+        "category": category,
+        "target": target,
+        "progress": progress,
+        "timestamp": datetime.now().isoformat()
+    })
+    save_goals(goals)
+    return jsonify({"message": "Goal saved", "goal": goal})
 
 def load_entries():
     if os.path.exists(TEXT_FILE):
