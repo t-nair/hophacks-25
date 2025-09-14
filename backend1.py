@@ -84,10 +84,11 @@ def submit_text():
             "You are a compassionate therapist and reflective coach. "
             "Read the following journal entry and respond with:\n"
             "Summary: (A ~50-word empathetic summary capturing the writer’s emotions, mindset, and underlying themes.)\n"
-            "Advice: (One to two gentle, constructive pieces of advice tailored to their situation.)\n"
+            "Advice: (Provide exactly three gentle, constructive, and actionable pieces of advice as a numbered list. Each item should be a complete sentence and not cut off. Do not include formatting artifacts, numbers alone, or incomplete lines.)\n"
             "MotivationalWords: (A comma-separated list of 3-5 motivational words or phrases relevant to the writer's situation.)\n"
             "\nKeep the tone warm, supportive, and practical. "
             "Do not repeat the journal entry verbatim—summarize it in your own words.\n"
+            "Advice must be a numbered list, each item a full sentence ending with a period.\n"
             f"Journal entry:\n{text}"
         )
         response = model.generate_content(prompt)
