@@ -5,6 +5,7 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, BarChart, Bar, AreaChart, Area
 } from 'recharts';
+import CalendarHeatmap from './CalendarHeatmap';
 import {
   Video, Mic, MicOff, Play, Pause, Plus, Calendar, TrendingUp, Heart, Brain,
   FileText, Camera, Target, Bell, User, Home, BarChart3, Settings, Upload,
@@ -622,8 +623,8 @@ function App() {
   // Fetch entries from backend
   // Simple sentiment analysis function
   function getSentiment(text) {
-    const positiveWords = ["happy", "joy", "excited", "content", "hopeful", "grateful", "proud", "confident", "loving", "playful", "calm", "relaxed", "peaceful", "productive", "energized", "focused", "accomplished", "progress", "satisfaction", "gratitude", "motivated", "determined"];
-    const negativeWords = ["sad", "lonely", "hurt", "angry", "frustrated", "anxious", "nervous", "insecure", "overwhelmed", "jealous", "confused", "awkward", "embarrassed", "guilty", "ashamed", "regretful", "resentful", "envious", "exhausted", "stressed"];
+    const positiveWords = ["happy", "joy", "excited", "content", "hopeful", "grateful", "proud", "confident", "loving", "playful", "calm", "relaxed", "peaceful", "productive", "energized", "focused", "accomplished", "progress", "satisfaction", "gratitude", "motivated", "determined", "nice", "good", "harder"];
+    const negativeWords = ["sad", "lonely", "hurt", "angry", "frustrated", "anxious", "nervous", "insecure", "overwhelmed", "jealous", "confused", "awkward", "embarrassed", "ashamed", "regretful", "resentful", "envious", "exhausted", "stressed"];
     let score = 0;
     const textLower = text.toLowerCase();
     positiveWords.forEach(word => { if (textLower.includes(word)) score += 1; });
@@ -1098,8 +1099,7 @@ function App() {
   const AnalyticsScreen = () => (
     <div>
       <h2 style={styles.sectionTitle}>Analytics Dashboard</h2>
-      
-      {/* Sentiment Distribution */}
+      {/* Sentiment Distribution & Goal Progress */}
       <div style={styles.twoColumnGrid}>
         <div style={styles.chartCard}>
           <h3 style={styles.chartTitle}>Sentiment Distribution</h3>
@@ -1121,8 +1121,6 @@ function App() {
             </PieChart>
           </ResponsiveContainer>
         </div>
-
-        {/* Goal Progress */}
         <div style={styles.chartCard}>
           <h3 style={styles.chartTitle}>Goal Progress</h3>
           <div>
@@ -1146,7 +1144,22 @@ function App() {
           </div>
         </div>
       </div>
-
+      {/* Heatmap Visual */}
+      <div style={styles.chartCard}>
+        <h3 style={styles.chartTitle}>Monthly Mood Heatmap</h3>
+        {/* Demo heatmap colors for September 2025 */}
+        {(() => {
+          const heatmapColors = {};
+          for (let d = 1; d <= 28; d++) {
+            const dateStr = `2025-09-${String(d).padStart(2, '0')}`;
+            if (d % 5 === 0) heatmapColors[dateStr] = '#10B981'; // green
+            else if (d % 3 === 0) heatmapColors[dateStr] = '#EF4444'; // red
+            else if (d % 2 === 0) heatmapColors[dateStr] = '#F59E0B'; // yellow
+            else heatmapColors[dateStr] = '#6B7280'; // gray
+          }
+          return <CalendarHeatmap colors={heatmapColors} />;
+        })()}
+      </div>
       {/* Detailed Mood Trends */}
       <div style={{...styles.chartCard, marginBottom: '24px'}}>
         <h3 style={styles.chartTitle}>Detailed Mood Trends</h3>
@@ -1162,7 +1175,6 @@ function App() {
           </LineChart>
         </ResponsiveContainer>
       </div>
-
       {/* Daily Summaries */}
       <div style={styles.chartCard}>
         <h3 style={styles.chartTitle}>Daily Insights</h3>
