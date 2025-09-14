@@ -549,6 +549,41 @@ function App() {
     return "neutral";
   }
 
+  // Gemini-based mood scoring (mock implementation)
+  async function getGeminiMoodScore(text) {
+    // Replace this with Gemini API call for real implementation
+    // For now, use a simple heuristic: positiveWords +1, negativeWords -1, scale to 1-10
+    const positiveWords = ["happy", "joy", "excited", "content", "hopeful", "grateful", "proud", "confident", "loving", "playful", "calm", "relaxed", "peaceful", "productive", "energized", "focused", "accomplished", "progress", "satisfaction", "gratitude", "motivated", "determined"];
+    const negativeWords = ["sad", "lonely", "hurt", "angry", "frustrated", "anxious", "nervous", "insecure", "overwhelmed", "jealous", "confused", "awkward", "embarrassed", "guilty", "ashamed", "regretful", "resentful", "envious", "exhausted", "stressed"];
+    let score = 5;
+    const textLower = text.toLowerCase();
+    positiveWords.forEach(word => { if (textLower.includes(word)) score += 0.3; });
+    negativeWords.forEach(word => { if (textLower.includes(word)) score -= 0.3; });
+    score = Math.max(1, Math.min(10, score));
+    return score;
+  }
+
+  // Calculate daily mood averages using Gemini scores
+  async function calculateDailyMoodTrends(entries) {
+    // Group entries by date
+    const grouped = {};
+    for (const entry of entries) {
+      const dateStr = entry.timestamp instanceof Date ? entry.timestamp.toISOString().slice(0,10) : new Date(entry.timestamp).toISOString().slice(0,10);
+      if (!grouped[dateStr]) grouped[dateStr] = [];
+      grouped[dateStr].push(entry);
+    }
+    // For each day, get Gemini mood scores and average
+    const trends = [];
+    for (const date in grouped) {
+      const scores = await Promise.all(grouped[date].map(e => getGeminiMoodScore(e.transcript)));
+      const avgMood = scores.reduce((a,b) => a+b, 0) / scores.length;
+      trends.push({ date, mood: Number(avgMood.toFixed(2)) });
+    }
+    // Sort by date ascending
+    trends.sort((a,b) => a.date.localeCompare(b.date));
+    return trends;
+  }
+
   const fetchEntries = async () => {
     try {
       const res = await axios.get('http://localhost:5000/entries');
@@ -564,18 +599,23 @@ function App() {
           highlight: entry.highlight || ''
         };
       });
-      setEntries([...backendEntries, ...mockEntries]);
+      const allEntries = [...backendEntries, ...mockEntries];
+      setEntries(allEntries);
       // Update analytics sentiment distribution
       const sentimentCounts = { positive: 0, neutral: 0, negative: 0 };
       backendEntries.forEach(e => { sentimentCounts[e.sentiment.overall] += 1; });
-      setAnalytics(a => ({
-        ...a,
-        sentimentDistribution: [
-          { name: 'Positive', value: sentimentCounts.positive, color: '#10B981' },
-          { name: 'Neutral', value: sentimentCounts.neutral, color: '#6B7280' },
-          { name: 'Negative', value: sentimentCounts.negative, color: '#EF4444' }
-        ]
-      }));
+      // Calculate Gemini-based mood trends
+      calculateDailyMoodTrends(allEntries).then(moodTrends => {
+        setAnalytics(a => ({
+          ...a,
+          sentimentDistribution: [
+            { name: 'Positive', value: sentimentCounts.positive, color: '#10B981' },
+            { name: 'Neutral', value: sentimentCounts.neutral, color: '#6B7280' },
+            { name: 'Negative', value: sentimentCounts.negative, color: '#EF4444' }
+          ],
+          moodTrends
+        }));
+      });
     } catch (err) {
       setEntries([...mockEntries]);
     }
@@ -585,12 +625,24 @@ function App() {
   const handleTextSubmit = async (e) => {
     e.preventDefault();
     if (!textEntry.trim()) return;
+    // Optimistically clear input and add temporary entry
+    const tempEntry = {
+      _id: Date.now(),
+      title: 'Text Entry',
+      timestamp: new Date(),
+      sentiment: { overall: getSentiment(textEntry), confidence: 1, emotions: {} },
+      transcript: textEntry,
+      highlight: ''
+    };
+    setEntries(prev => [tempEntry, ...prev]);
+    setTextEntry('');
     try {
       await axios.post('http://localhost:5000/submit_text', { text: textEntry });
-      setTextEntry('');
-      fetchEntries();
+      fetchEntries(); // Refresh with backend data
     } catch (err) {
       alert('Failed to submit text entry');
+      // Optionally remove temp entry if failed
+      setEntries(prev => prev.filter(e => e._id !== tempEntry._id));
     }
   };
 
@@ -620,38 +672,48 @@ function App() {
         video: true, 
         audio: true 
       });
-      
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-      }
-      
+
+      // Ensure video preview always shows camera stream
+      const setVideoStream = () => {
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          videoRef.current.playsInline = true;
+          videoRef.current.muted = true;
+          videoRef.current.play().catch(() => {});
+        } else {
+          // Try again after a short delay if ref not ready
+          setTimeout(setVideoStream, 100);
+        }
+      };
+      setVideoStream();
+
       const mediaRecorder = new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
       setStream(stream);
-      
+
       const chunks = [];
       mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
           chunks.push(event.data);
         }
       };
-      
+
       mediaRecorder.onstop = () => {
         setRecordedChunks(chunks);
       };
-      
+
       mediaRecorder.start();
       setIsRecording(true);
-      
+
       // Start timer
       const timer = setInterval(() => {
         setRecordingTime(prev => prev + 1);
       }, 1000);
-      
+
       setTimeout(() => {
         clearInterval(timer);
       }, 300000); // Max 5 minutes
-      
+
     } catch (error) {
       console.error('Error starting recording:', error);
     }
@@ -814,6 +876,7 @@ function App() {
               ref={videoRef}
               autoPlay
               muted
+              playsInline
               style={styles.video}
             />
             {!isRecording && (
