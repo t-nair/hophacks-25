@@ -1240,13 +1240,8 @@ function App() {
                   <video
                     src={entry.videoUrl}
                     style={{width: '100%', height: '180px', objectFit: 'cover', borderRadius: '8px', background: '#111827'}}
-                    preload="metadata"
-                    onLoadedMetadata={e => { try { e.target.currentTime = 0.1; } catch {} }}
-                    muted
+                    controls
                   />
-                  <div style={{position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', background: 'rgba(0,0,0,0.5)', borderRadius: '50%', padding: '12px'}}>
-                    <Play size={32} color="#fff" />
-                  </div>
                 </div>
               ) : (
                 <p style={styles.entryContent}>{entry.transcript}</p>
