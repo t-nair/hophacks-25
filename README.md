@@ -1,8 +1,7 @@
 # sine 🧠🎶  
 *Find your rhythm. Reflect, record, and grow.*  
-
-[![sine Intro Video](<img width="776" height="406" alt="sinelogo" src="https://github.com/user-attachments/assets/1bbf36c8-7453-422b-9688-9e4f62be46df" />
-)](https://www.youtube.com/watch?v=LHiZnb56LXI "sine Intro Video - Click to watch!")
+Won 1st place on Data Visualization track at HopHacks!
+[Watch the intro video here!](https://www.youtube.com/watch?v=LHiZnb56LXI)
 
 ## 🌟 Overview  
 **sine** is a reflective journaling and analytics platform that helps users track their mental, emotional, and personal growth. Through text and video entries, real-time sentiment analysis, and AI-powered highlights, sine transforms raw reflections into actionable insights and empowering feedback.  
